@@ -11,7 +11,7 @@ export default function AppLayout() {
     <div className="grid h-screen grid-cols-1 grid-rows-[auto_1fr_auto]">
       {isLoading && <Loader />}
       <Header />
-      <div className="my-10 overflow-scroll">
+      <div className="overflow-scroll">
         <main className="mx-auto max-w-3xl ">
           <Outlet />
         </main>
