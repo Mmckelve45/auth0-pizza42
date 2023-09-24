@@ -1,7 +1,14 @@
 // import { useState } from "react";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Form, redirect, useNavigation, useActionData } from "react-router-dom";
 import { createOrder } from "../../services/apiRestaurant";
+import store from "../../store";
 import Button from "../../ui/Button";
+import { formatCurrency } from "../../utils/helpers";
+import { clearCart, getCart, getTotalCartPrice } from "../cart/cartSlice";
+import EmptyCart from "../cart/EmptyCart";
+import { fetchAddress } from "../user/userSlice";
 
 // https://uibakery.io/regex-library/phone-number
 const isValidPhone = (str) =>
@@ -9,48 +16,37 @@ const isValidPhone = (str) =>
     str,
   );
 
-const fakeCart = [
-  {
-    pizzaId: 12,
-    name: "Mediterranean",
-    quantity: 2,
-    unitPrice: 16,
-    totalPrice: 32,
-  },
-  {
-    pizzaId: 6,
-    name: "Vegetale",
-    quantity: 1,
-    unitPrice: 13,
-    totalPrice: 13,
-  },
-  {
-    pizzaId: 11,
-    name: "Spinach and Mushroom",
-    quantity: 1,
-    unitPrice: 15,
-    totalPrice: 15,
-  },
-];
-
 function CreateOrder() {
-  // const [withPriority, setWithPriority] = useState(false);
-  const cart = fakeCart;
-  console.log(cart);
+  const username = useSelector((state) => state.user.username);
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
+  const [withPriority, setWithPriority] = useState(false);
 
+  const cart = useSelector(getCart);
+  const totalCartPrice = useSelector(getTotalCartPrice);
+  const priorityPrice = withPriority ? totalCartPrice * 0.2 : 0;
+  const totalPrice = totalCartPrice + priorityPrice;
   const formErrors = useActionData();
+  const dispatch = useDispatch();
+  if (!cart.length) return <EmptyCart />;
 
   return (
     <div className="py-6 px-4">
       <h2 className="text-xl font-semibold mb-8">Ready to order? Lets go!</h2>
 
+      <Button onClick={() => dispatch(fetchAddress())}>Get Position</Button>
+
       {/* <Form method='POST' action='/order/new'> */}
       <Form method="POST">
         <div className="mb-5 flex gap-2 flex-col sm:flex-row sm:items-center">
           <label className="sm:basis-40">First Name</label>
-          <input type="text" name="customer" required className="input grow" />
+          <input
+            type="text"
+            name="customer"
+            required
+            className="input grow"
+            defaultValue={username}
+          />
         </div>
 
         <div className="mb-5 flex gap-2 flex-col sm:flex-row sm:items-center">
@@ -85,8 +81,8 @@ function CreateOrder() {
             className="h-6 w-6 accent-yellow-400
              focus:outline-none 
              focus:ring focus:ring-yellow-400 focus:ring-offset-2 "
-            // value={withPriority}
-            // onChange={(e) => setWithPriority(e.target.checked)}
+            value={withPriority}
+            onChange={(e) => setWithPriority(e.target.checked)}
           />
           <label htmlFor="priority" className="font-medium">
             Want to give your order priority?
@@ -96,7 +92,9 @@ function CreateOrder() {
         <div>
           <input type="hidden" name="cart" value={JSON.stringify(cart)} />
           <Button type="primary" disabled={isSubmitting}>
-            {isSubmitting ? "Placing Order" : "Order now"}
+            {isSubmitting
+              ? "Placing Order..."
+              : `Order now for ${formatCurrency(totalPrice)}`}
           </Button>
         </div>
       </Form>
@@ -110,7 +108,7 @@ export async function action({ request }) {
   const order = {
     ...data,
     cart: JSON.parse(data.cart),
-    priority: data.priority === "on",
+    priority: data.priority === "true",
   };
   const errors = {};
   if (!isValidPhone(order.phone)) {
@@ -124,6 +122,8 @@ export async function action({ request }) {
 
   // If everything is ok, create new order and redirect.
   const newOrder = await createOrder(order);
+  // Do not overuse here.
+  store.dispatch(clearCart());
 
   return redirect(`/order/${newOrder.id}`);
 }
