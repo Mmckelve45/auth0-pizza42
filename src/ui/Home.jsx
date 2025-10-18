@@ -1,25 +1,57 @@
-import { useSelector } from "react-redux";
-import CreateUser from "../features/user/CreateUser";
+import { useAuth0 } from "@auth0/auth0-react";
+import LoginButton from "../features/auth/LoginButton";
 import Button from "./Button";
 
 function Home() {
-  const username = useSelector((state) => state.user.username);
+  const { isAuthenticated, isLoading, user, loginWithRedirect } = useAuth0();
+
+  const handleSignUp = () => {
+    loginWithRedirect({
+      authorizationParams: {
+        screen_hint: 'signup',
+      },
+    });
+  };
 
   return (
-    <div className="my-10 text-center sm:my-16">
-      <h1 className="mb-8 px-4 text-xl font-semibold md:text-3xl">
+    <div className="my-10 px-4 text-center sm:my-16">
+      <h1 className="mb-8 text-xl font-semibold md:text-3xl">
         The best pizza.
         <br />
         <span className="text-yellow-500">
           Straight out of the oven, straight to you.
         </span>
       </h1>
-      {username === "" ? (
-        <CreateUser />
+
+      {isLoading ? (
+        <p className="text-stone-600">Loading...</p>
+      ) : isAuthenticated ? (
+        <div className="space-y-4">
+          <p className="text-lg text-stone-700">
+            👋 Welcome back, {user?.name || user?.email}!
+          </p>
+          <Button to="/menu" type="primary">
+            Start Ordering
+          </Button>
+        </div>
       ) : (
-        <Button to="/menu" type="primary">
-          Continue ordering, {username}
-        </Button>
+        <div className="space-y-6">
+          <div>
+            <p className="mb-6 text-lg text-stone-700">
+              Welcome! 👋
+            </p>
+            <LoginButton />
+            <p className="mt-4 text-sm text-stone-600">
+              {"Don't have an account?"}{" "}
+              <button
+                onClick={handleSignUp}
+                className="font-semibold text-yellow-500 hover:text-yellow-600 focus:outline-none"
+              >
+                Sign up
+              </button>
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-# Fast React Pizza - Auth0 Enhanced
+# Pizza 42 - Auth0 Enhanced
 
 A modern pizza ordering application built with React, Redux Toolkit, and Auth0 authentication, deployed on Vercel.
 

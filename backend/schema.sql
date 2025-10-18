@@ -1,4 +1,4 @@
--- Fast React Pizza Database Schema
+-- Pizza 42 Database Schema
 -- For use with Vercel Postgres or PostgreSQL
 
 -- Users table
