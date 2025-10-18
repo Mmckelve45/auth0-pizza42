@@ -1,93 +1,205 @@
-# React + Vite
+# Fast React Pizza - Auth0 Enhanced
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern pizza ordering application built with React, Redux Toolkit, and Auth0 authentication, deployed on Vercel.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Browse pizza menu
+- Add items to cart with Redux state management
+- User authentication with Auth0
+- Place and track orders
+- View order history
+- User profile and preferences
+- Geolocation for automatic address filling
+- Priority order upgrades
 
-Dependencies:
-npm i eslint vite-plugin-eslint eslint-config-react --save-dev
+## Tech Stack
 
-create eslintrc.json for rules
-{
-"extends": "react-app"
-}
+### Frontend
+- **React 18** - UI library
+- **Vite** - Build tool and dev server
+- **Redux Toolkit** - State management
+- **React Router v6** - Routing with data loaders
+- **TailwindCSS** - Styling
+- **Auth0 React SDK** - Authentication
 
-Be sure to have eslint extension in vsCode
+### Backend
+- **Vercel Serverless Functions** - API routes
+- **Vercel Postgres** - Database
+- **Auth0** - Authentication & authorization
+- **Express OAuth2 JWT Bearer** - JWT validation
 
-Add eslint to vite.config.js
-import eslint from "vite-plugin-eslint";
+## Project Structure
 
-// https://vitejs.dev/config/
-export default defineConfig({
-plugins: [react(), eslint()],
-});
+```
+├── api/                      # Vercel Serverless Functions
+│   ├── auth/                # Auth0 handlers
+│   ├── orders/              # Order endpoints
+│   ├── user/                # User profile endpoints
+│   └── menu.js              # Menu endpoint
+├── backend/                  # Shared backend code
+│   ├── lib/                 # Utilities (auth0, db, api clients)
+│   ├── middleware/          # Express middleware
+│   ├── models/              # Data models
+│   └── schema.sql           # Database schema
+├── src/                      # Frontend React app
+│   ├── features/            # Feature-based modules
+│   ├── services/            # API clients
+│   ├── ui/                  # Reusable components
+│   └── utils/               # Helper functions
+└── .claude/                  # Project documentation
+```
 
-install tailwind (see their docs)
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
+## Getting Started
 
-install VS Code extension for tailwind (gives autocompletion)
+### Prerequisites
+- Node.js 18+ and npm
+- Auth0 account
+- Vercel account (for deployment)
 
-install Tailwind Prettier extension (github link from search)
+### Installation
 
-npm install -D prettier prettier-plugin-tailwindcss
-// prettier.config.cjs
-module.exports = {
-plugins: ['prettier-plugin-tailwindcss'],
-}
+1. Clone the repository:
+```bash
+git clone <your-repo-url>
+cd auth0
+```
 
-Questions:
+2. Install dependencies:
+```bash
+npm install
+```
 
-1. Gather requirements and features
-2. Divide the application into pages
-3. - Overall page-level UI
-4. - break desired UI into components
-5. - Design and build static version (no state)
-6. Divide the application into feature categories
-7. - Think a bout statemanagement and data flow
-8. Decide on which libraries to use
+3. Set up environment variables:
+```bash
+cp .env.example .env.local
+```
 
-Requirements
+Edit `.env.local` with your Auth0 credentials:
+```env
+VITE_AUTH0_DOMAIN=your-tenant.auth0.com
+VITE_AUTH0_CLIENT_ID=your-client-id
+VITE_AUTH0_AUDIENCE=https://your-api-identifier
+AUTH0_ISSUER_BASE_URL=https://your-tenant.auth0.com
+AUTH0_AUDIENCE=https://your-api-identifier
+DATABASE_URL=your-postgres-connection-string
+```
 
-1. Users can order one or more pizas from menu
-2. Requires no user accounts and no logins: users just input their name
-3. The pizza menu can change, so it should be loaded from an API.
-4. Ordering requries the user's name, phone number, and address
-5. If Possible, GPS location should also be provided to make delivery easier.
-6. Use's can mark their order as 'priority' for 20% upcharge
-7. Orders are made by sending a POST request with teh order data (user data + selected pizzas) to the API.
-8. Payments are made on delivery, so no payment processing in the app
-9. Each new order gets unique ID that should be displayed, so the user can later look up the status of their order based on ID.
-10. Users should be able to mark their order as priority even after it's been placed.
+### Auth0 Setup
 
-Features
+1. Create an Auth0 application (Single Page Application)
+2. Configure callback URLs:
+   - `http://localhost:5173/callback`
+   - `https://your-domain.vercel.app/callback`
+3. Configure logout URLs:
+   - `http://localhost:5173`
+   - `https://your-domain.vercel.app`
+4. Create an API in Auth0 for backend authorization
+5. Copy the domain, client ID, and audience to your `.env.local`
 
-1. User
-2. Menu
-3. Cart
-4. Order
+### Database Setup
 
-Page
+1. Create a Vercel Postgres database
+2. Run the schema:
+```bash
+psql $DATABASE_URL -f backend/schema.sql
+```
 
-1. Homepage /
-2. Pizza Menu /menu
-3. Cart /cart
-4. Placing a new order /order/new
-5. Looking up an order /order/:orderID
+Or use Vercel's SQL editor to paste the contents of `backend/schema.sql`
 
-State
+### Development
 
-1. User > Global UI state (no accounts, so stays in app)
-2. Menu > Global remote state (menu is fetched from API)
-3. Cart > Global UI state (no need for API, just stored in app)
-4. Order > Global Remote State (fetched and submitted to API)
+Start the development server:
+```bash
+npm run dev
+```
 
-Tech choices
+For local testing of serverless functions:
+```bash
+vercel dev
+```
 
-1. Routing > React Router
-2. Styling > TailwindCSS
-3. Remote State Management > React Router
-4. UI State Management > Redux
+This will start:
+- Frontend: `http://localhost:5173`
+- API routes: `http://localhost:3000/api/*`
+
+## Deployment
+
+### Deploy to Vercel
+
+1. Install Vercel CLI:
+```bash
+npm install -g vercel
+```
+
+2. Deploy:
+```bash
+vercel
+```
+
+3. Set environment variables in Vercel dashboard:
+   - Go to Project Settings → Environment Variables
+   - Add all variables from `.env.example`
+
+4. Redeploy after setting environment variables
+
+### Database Migration
+
+Run the schema against your production database:
+```bash
+psql $PRODUCTION_DATABASE_URL -f backend/schema.sql
+```
+
+## API Endpoints
+
+### Public
+- `GET /api/menu` - Fetch pizza menu
+
+### Protected (Requires Auth0 token)
+- `GET /api/orders` - Get user's order history
+- `POST /api/orders` - Create new order
+- `GET /api/orders/:orderId` - Get specific order
+- `PATCH /api/orders/:orderId` - Update order (priority)
+- `GET /api/user/profile` - Get user profile
+- `PATCH /api/user/profile` - Update user profile
+
+## Authentication Flow
+
+1. User clicks "Login" → Redirects to Auth0
+2. User authenticates → Auth0 redirects back with token
+3. Token stored in React app via Auth0 SDK
+4. API calls include `Authorization: Bearer {token}` header
+5. Backend validates token via Auth0 middleware
+6. User data stored/retrieved from database
+
+## Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `vercel dev` - Local serverless function testing
+- `vercel` - Deploy to Vercel
+
+## Future Enhancements
+
+- [ ] MCP server for programmatic pizza ordering
+- [ ] Push notifications for order status
+- [ ] Favorite orders and reorder functionality
+- [ ] Loyalty points system
+- [ ] Payment integration (Stripe)
+- [ ] Admin dashboard
+- [ ] Real-time order tracking
+
+## Contributing
+
+This is a personal project, but feel free to fork and adapt for your own use!
+
+## License
+
+MIT
+
+## Acknowledgments
+
+- Original project inspired by Jonas Schmedtmann's React course
+- Enhanced with Auth0 and serverless architecture

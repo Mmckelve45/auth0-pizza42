@@ -10,7 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@auth0/auth0-react": "^2.8.0",
     "@reduxjs/toolkit": "^1.9.5",
+    "@vercel/postgres": "^0.10.0",
+    "axios": "^1.12.2",
+    "express-oauth2-jwt-bearer": "^1.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-redux": "^8.1.2",
