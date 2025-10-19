@@ -8,7 +8,7 @@ import { auth } from 'express-oauth2-jwt-bearer';
 // Auth0 JWT validation middleware
 export const jwtCheck = auth({
   audience: process.env.AUTH0_AUDIENCE,
-  issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL,
+  issuerBaseURL: `https://${process.env.AUTH0_DOMAIN}`,
   tokenSigningAlg: 'RS256',
 });
 

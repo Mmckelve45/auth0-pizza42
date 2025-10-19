@@ -4,6 +4,7 @@
  */
 
 import { useAuth0 } from '@auth0/auth0-react';
+import { Link } from 'react-router-dom';
 import { useAuthUser } from './useAuthHelpers';
 
 function UserProfile() {
@@ -13,12 +14,12 @@ function UserProfile() {
   if (!user) return null;
 
   return (
-    <div className="flex items-center gap-3">
+    <Link to="/profile" className="flex items-center gap-3 transition-opacity hover:opacity-80">
       {user.picture && (
         <img
           src={user.picture}
           alt={user.name || 'User'}
-          className="h-10 w-10 rounded-full"
+          className="h-10 w-10 cursor-pointer rounded-full ring-2 ring-transparent transition-all hover:ring-yellow-400"
         />
       )}
       <div className="hidden sm:block">
@@ -29,7 +30,7 @@ function UserProfile() {
           <p className="text-xs text-orange-600">⚠ Email not verified</p>
         )}
       </div>
-    </div>
+    </Link>
   );
 }
 
