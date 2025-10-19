@@ -7,12 +7,42 @@ import { jwtCheck, getUserIdFromToken } from '../lib/auth0.js';
 import { unauthorized } from '../lib/response.js';
 
 /**
+ * Add Express-like methods to Vercel request object
+ * Required for express-oauth2-jwt-bearer to work
+ */
+const polyfillExpressMethods = (req) => {
+  // Polyfill req.is() for Content-Type checking
+  if (!req.is) {
+    req.is = function(types) {
+      const contentType = this.headers['content-type'] || '';
+      if (!Array.isArray(types)) types = [types];
+      for (const type of types) {
+        if (contentType.includes(type)) return type;
+      }
+      return false;
+    };
+  }
+
+  // Polyfill req.get() for header access
+  if (!req.get) {
+    req.get = function(name) {
+      return this.headers[name.toLowerCase()];
+    };
+  }
+
+  return req;
+};
+
+/**
  * Middleware to require authentication on serverless routes
  * Usage: wrap your handler function with requireAuth
  */
 export const requireAuth = (handler) => {
   return async (req, res) => {
     try {
+      // Add Express methods for compatibility
+      polyfillExpressMethods(req);
+
       // Run JWT validation
       await new Promise((resolve, reject) => {
         jwtCheck(req, res, (err) => {
@@ -41,6 +71,9 @@ export const requireAuth = (handler) => {
 export const optionalAuth = (handler) => {
   return async (req, res) => {
     try {
+      // Add Express methods for compatibility
+      polyfillExpressMethods(req);
+
       await new Promise((resolve) => {
         jwtCheck(req, res, (_err) => {
           // Always resolve, don't reject - this is optional auth
