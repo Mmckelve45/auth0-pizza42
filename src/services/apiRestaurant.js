@@ -1,5 +1,25 @@
 // Use our own API instead of external restaurant API
+import { getAccessToken } from './auth';
+
 const API_URL = '/api';
+
+/**
+ * Get authorization headers with Auth0 token
+ */
+async function getAuthHeaders() {
+  try {
+    const token = await getAccessToken();
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
+  } catch (error) {
+    // User not authenticated, return headers without token
+    return {
+      'Content-Type': 'application/json',
+    };
+  }
+}
 
 export async function getMenu() {
   const res = await fetch(`${API_URL}/menu`);
@@ -12,7 +32,8 @@ export async function getMenu() {
 }
 
 export async function getOrder(id) {
-  const res = await fetch(`${API_URL}/orders/${id}`);
+  const headers = await getAuthHeaders();
+  const res = await fetch(`${API_URL}/orders/${id}`, { headers });
   if (!res.ok) throw Error(`Couldn't find order #${id}`);
 
   const { data } = await res.json();
@@ -21,12 +42,11 @@ export async function getOrder(id) {
 
 export async function createOrder(newOrder) {
   try {
+    const headers = await getAuthHeaders();
     const res = await fetch(`${API_URL}/orders`, {
       method: 'POST',
       body: JSON.stringify(newOrder),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
     });
 
     if (!res.ok) throw Error();
@@ -39,12 +59,11 @@ export async function createOrder(newOrder) {
 
 export async function updateOrder(id, updateObj) {
   try {
+    const headers = await getAuthHeaders();
     const res = await fetch(`${API_URL}/orders/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(updateObj),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
     });
 
     if (!res.ok) throw Error();
