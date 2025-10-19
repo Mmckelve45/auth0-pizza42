@@ -1,6 +1,21 @@
 -- Pizza 42 Database Schema
 -- For use with Vercel Postgres or PostgreSQL
 
+-- Pizzas/Menu table
+CREATE TABLE IF NOT EXISTS pizzas (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  unit_price DECIMAL(10, 2) NOT NULL,
+  image_url TEXT,
+  ingredients JSONB,
+  sold_out BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create index for faster lookups
+CREATE INDEX IF NOT EXISTS idx_pizzas_name ON pizzas(name);
+
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -67,5 +82,12 @@ CREATE TRIGGER update_orders_updated_at
 DROP TRIGGER IF EXISTS update_user_preferences_updated_at ON user_preferences;
 CREATE TRIGGER update_user_preferences_updated_at
   BEFORE UPDATE ON user_preferences
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Apply trigger to pizzas table
+DROP TRIGGER IF EXISTS update_pizzas_updated_at ON pizzas;
+CREATE TRIGGER update_pizzas_updated_at
+  BEFORE UPDATE ON pizzas
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();

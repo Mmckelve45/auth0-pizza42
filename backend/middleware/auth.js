@@ -42,7 +42,7 @@ export const optionalAuth = (handler) => {
   return async (req, res) => {
     try {
       await new Promise((resolve) => {
-        jwtCheck(req, res, (err) => {
+        jwtCheck(req, res, (_err) => {
           // Always resolve, don't reject - this is optional auth
           resolve();
         });

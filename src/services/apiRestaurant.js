@@ -1,4 +1,5 @@
-const API_URL = 'https://react-fast-pizza-api.onrender.com/api';
+// Use our own API instead of external restaurant API
+const API_URL = '/api';
 
 export async function getMenu() {
   const res = await fetch(`${API_URL}/menu`);
@@ -11,7 +12,7 @@ export async function getMenu() {
 }
 
 export async function getOrder(id) {
-  const res = await fetch(`${API_URL}/order/${id}`);
+  const res = await fetch(`${API_URL}/orders/${id}`);
   if (!res.ok) throw Error(`Couldn't find order #${id}`);
 
   const { data } = await res.json();
@@ -20,7 +21,7 @@ export async function getOrder(id) {
 
 export async function createOrder(newOrder) {
   try {
-    const res = await fetch(`${API_URL}/order`, {
+    const res = await fetch(`${API_URL}/orders`, {
       method: 'POST',
       body: JSON.stringify(newOrder),
       headers: {
@@ -38,7 +39,7 @@ export async function createOrder(newOrder) {
 
 export async function updateOrder(id, updateObj) {
   try {
-    const res = await fetch(`${API_URL}/order/${id}`, {
+    const res = await fetch(`${API_URL}/orders/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(updateObj),
       headers: {

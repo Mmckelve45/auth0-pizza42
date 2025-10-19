@@ -38,7 +38,7 @@ export const updateUserAppMetadata = async (userId, appMetadata) => {
 };
 
 /**
- * Get user by ID
+ * Get user by ID with full metadata
  * @param {string} userId - Auth0 user ID
  */
 export const getManagementUser = async (userId) => {
@@ -50,4 +50,30 @@ export const getManagementUser = async (userId) => {
     console.error('Error getting user from Management API:', error);
     throw error;
   }
+};
+
+/**
+ * Format address from GeoJSON structure
+ * @param {Object} address - Address object from user_metadata
+ * @returns {Object} - Formatted address object
+ */
+export const formatAddress = (address) => {
+  if (!address || !address.properties || !address.properties.geocoding) {
+    return null;
+  }
+
+  const geo = address.properties.geocoding;
+  return {
+    street: `${geo.house_number || geo.housenumber || ''} ${geo.street || ''}`.trim(),
+    city: geo.city || geo.locality || '',
+    state: geo.state || '',
+    postalCode: geo.postal_code || geo.postcode || '',
+    country: geo.country || '',
+    formatted: [
+      `${geo.house_number || geo.housenumber || ''} ${geo.street || ''}`.trim(),
+      geo.city || geo.locality || '',
+      `${geo.state || ''} ${geo.postal_code || geo.postcode || ''}`.trim(),
+      geo.country || ''
+    ].filter(Boolean).join(', ')
+  };
 };

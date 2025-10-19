@@ -4,9 +4,7 @@
  * POST /api/orders - Create new order (protected)
  */
 
-import { createOrder } from '../../backend/lib/restaurant-api.js';
 import { getOrCreateUser, saveOrder, getUserOrders } from '../../backend/lib/db.js';
-import { success, badRequest, serverError } from '../../backend/lib/response.js';
 import { requireAuth } from '../../backend/middleware/auth.js';
 import { cors } from '../../backend/middleware/cors.js';
 import { asyncHandler } from '../../backend/middleware/error-handler.js';
@@ -25,10 +23,16 @@ const handler = async (req, res) => {
       // Fetch user's orders
       const orders = await getUserOrders(user.id);
 
-      return res.status(200).json(success(orders));
+      return res.status(200).json({
+        success: true,
+        data: orders.map((order) => order.order_data),
+      });
     } catch (error) {
       console.error('Error fetching orders:', error);
-      return res.status(500).json(serverError('Failed to fetch orders'));
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to fetch orders',
+      });
     }
   }
 
@@ -39,34 +43,58 @@ const handler = async (req, res) => {
       const email = getEmailFromToken(req);
 
       // Validate required fields
-      const { customer, cart, priority, estimatedDelivery, address, phone, position } = req.body;
+      const { customer, cart, priority, address, phone, position } = req.body;
 
       if (!customer || !cart || cart.length === 0) {
-        return res.status(400).json(badRequest('Missing required fields: customer, cart'));
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields: customer, cart',
+        });
       }
 
       // Get or create user
       const user = await getOrCreateUser(auth0Id, email, customer);
 
-      // Create order with restaurant API
+      // Generate order ID
+      const orderId = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+      // Calculate prices
+      const pizzaPrice = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+      const priorityPrice = priority ? pizzaPrice * 0.2 : 0;
+
+      // Calculate estimated delivery (20 mins base + 5 mins per pizza)
+      const estimatedDelivery = new Date(
+        Date.now() + (20 + cart.reduce((sum, item) => sum + item.quantity, 0) * 5) * 60 * 1000
+      ).toISOString();
+
+      // Create order data
       const orderData = {
+        id: orderId,
         customer,
-        phone: phone || user.phone,
+        phone: phone || user.phone || '',
         address: address || '',
         priority: priority || false,
         position: position || '',
         cart,
+        status: 'preparing',
+        estimatedDelivery,
+        orderPrice: pizzaPrice,
+        priorityPrice,
       };
 
-      const restaurantOrder = await createOrder(orderData);
+      // Save order to database
+      const savedOrder = await saveOrder(user.id, orderId, orderData);
 
-      // Save order to our database
-      const savedOrder = await saveOrder(user.id, restaurantOrder.data.id, restaurantOrder.data);
-
-      return res.status(201).json(success(savedOrder));
+      return res.status(201).json({
+        success: true,
+        data: orderData,
+      });
     } catch (error) {
       console.error('Error creating order:', error);
-      return res.status(500).json(serverError('Failed to create order'));
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to create order',
+      });
     }
   }
 

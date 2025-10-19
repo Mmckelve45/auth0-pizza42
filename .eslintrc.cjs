@@ -16,5 +16,17 @@ module.exports = {
       'warn',
       { allowConstantExport: true },
     ],
+    // Allow unused variables that start with underscore
+    'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
   },
+  overrides: [
+    {
+      // Backend/API files run in Node.js environment
+      files: ['backend/**/*.js', 'api/**/*.js'],
+      env: {
+        node: true,
+        es2020: true,
+      },
+    },
+  ],
 }

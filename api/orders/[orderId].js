@@ -4,9 +4,7 @@
  * PATCH /api/orders/:orderId - Update order priority (protected)
  */
 
-import { getOrder, updateOrder as updateRestaurantOrder } from '../../backend/lib/restaurant-api.js';
 import { getOrderByIdAndUser, updateOrder as updateDbOrder, getOrCreateUser } from '../../backend/lib/db.js';
-import { success, notFound, serverError } from '../../backend/lib/response.js';
 import { requireAuth } from '../../backend/middleware/auth.js';
 import { cors } from '../../backend/middleware/cors.js';
 import { asyncHandler } from '../../backend/middleware/error-handler.js';
@@ -31,22 +29,22 @@ const handler = async (req, res) => {
       const dbOrder = await getOrderByIdAndUser(orderId, user.id);
 
       if (!dbOrder) {
-        return res.status(404).json(notFound('Order not found or does not belong to you'));
+        return res.status(404).json({
+          success: false,
+          error: 'Order not found or does not belong to you',
+        });
       }
 
-      // Fetch fresh data from restaurant API
-      const restaurantOrder = await getOrder(orderId);
-
-      // Update our database with fresh data
-      await updateDbOrder(orderId, {
-        orderData: restaurantOrder.data,
-        status: restaurantOrder.data.status,
+      return res.status(200).json({
+        success: true,
+        data: dbOrder.order_data,
       });
-
-      return res.status(200).json(success(restaurantOrder.data));
     } catch (error) {
       console.error('Error fetching order:', error);
-      return res.status(500).json(serverError('Failed to fetch order'));
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to fetch order',
+      });
     }
   }
 
@@ -62,24 +60,39 @@ const handler = async (req, res) => {
       const dbOrder = await getOrderByIdAndUser(orderId, user.id);
 
       if (!dbOrder) {
-        return res.status(404).json(notFound('Order not found or does not belong to you'));
+        return res.status(404).json({
+          success: false,
+          error: 'Order not found or does not belong to you',
+        });
       }
 
-      // Update restaurant order
+      // Update order data
       const updateData = req.body;
-      const updatedRestaurantOrder = await updateRestaurantOrder(orderId, updateData);
+      const currentOrderData = dbOrder.order_data;
 
-      // Update our database
-      await updateDbOrder(orderId, {
-        orderData: updatedRestaurantOrder.data,
-        priority: updateData.priority,
-        status: updatedRestaurantOrder.data.status,
+      // Recalculate priority price if priority is being updated
+      if (updateData.priority !== undefined) {
+        const priorityPrice = updateData.priority ? currentOrderData.orderPrice * 0.2 : 0;
+        currentOrderData.priority = updateData.priority;
+        currentOrderData.priorityPrice = priorityPrice;
+      }
+
+      // Update database
+      const updatedOrder = await updateDbOrder(orderId, {
+        orderData: currentOrderData,
+        priority: currentOrderData.priority,
       });
 
-      return res.status(200).json(success(updatedRestaurantOrder.data));
+      return res.status(200).json({
+        success: true,
+        data: updatedOrder.order_data,
+      });
     } catch (error) {
       console.error('Error updating order:', error);
-      return res.status(500).json(serverError('Failed to update order'));
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to update order',
+      });
     }
   }
 

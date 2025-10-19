@@ -9,6 +9,7 @@ import { formatCurrency } from "../../utils/helpers";
 import { clearCart, getCart, getTotalCartPrice } from "../cart/cartSlice";
 import EmptyCart from "../cart/EmptyCart";
 import { fetchAddress } from "../user/userSlice";
+import { getStoredMetadata } from "../../utils/userMetadata";
 
 // https://uibakery.io/regex-library/phone-number
 const isValidPhone = (str) =>
@@ -36,6 +37,12 @@ function CreateOrder() {
   const totalPrice = totalCartPrice + priorityPrice;
   const formErrors = useActionData();
   const dispatch = useDispatch();
+
+  // Get metadata from localStorage
+  const metadata = getStoredMetadata();
+  const defaultName = metadata?.fullName || username;
+  const defaultAddress = metadata?.address?.formatted || address;
+
   if (!cart.length) return <EmptyCart />;
 
   return (
@@ -45,13 +52,13 @@ function CreateOrder() {
       {/* <Form method='POST' action='/order/new'> */}
       <Form method="POST">
         <div className="mb-5 flex gap-2 flex-col sm:flex-row sm:items-center">
-          <label className="sm:basis-40">First Name</label>
+          <label className="sm:basis-40">Full Name</label>
           <input
             type="text"
             name="customer"
             required
             className="input grow"
-            defaultValue={username}
+            defaultValue={defaultName}
           />
         </div>
 
@@ -74,7 +81,7 @@ function CreateOrder() {
               type="text"
               name="address"
               disabled={isLoadingAddress}
-              defaultValue={address}
+              defaultValue={defaultAddress}
               required
               className="input w-full"
             />

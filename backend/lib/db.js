@@ -5,6 +5,87 @@
 
 import { sql } from '@vercel/postgres';
 
+// ============================================
+// PIZZA / MENU FUNCTIONS
+// ============================================
+
+/**
+ * Get all pizzas from menu
+ * @returns {Array} - Array of pizza records
+ */
+export const getAllPizzas = async () => {
+  try {
+    const { rows } = await sql`
+      SELECT * FROM pizzas
+      ORDER BY name ASC
+    `;
+    return rows;
+  } catch (error) {
+    console.error('Database error in getAllPizzas:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get pizza by ID
+ * @param {number} pizzaId - Pizza ID
+ * @returns {Object|null} - Pizza record or null
+ */
+export const getPizzaById = async (pizzaId) => {
+  try {
+    const { rows } = await sql`
+      SELECT * FROM pizzas WHERE id = ${pizzaId}
+    `;
+    return rows.length > 0 ? rows[0] : null;
+  } catch (error) {
+    console.error('Database error in getPizzaById:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create or update a pizza
+ * @param {Object} pizzaData - Pizza data
+ * @returns {Object} - Created/updated pizza record
+ */
+export const upsertPizza = async (pizzaData) => {
+  try {
+    const { id, name, unitPrice, imageUrl, ingredients, soldOut } = pizzaData;
+
+    const { rows } = await sql`
+      INSERT INTO pizzas (id, name, unit_price, image_url, ingredients, sold_out, created_at, updated_at)
+      VALUES (
+        ${id},
+        ${name},
+        ${unitPrice},
+        ${imageUrl},
+        ${ingredients ? JSON.stringify(ingredients) : null},
+        ${soldOut || false},
+        NOW(),
+        NOW()
+      )
+      ON CONFLICT (id)
+      DO UPDATE SET
+        name = ${name},
+        unit_price = ${unitPrice},
+        image_url = ${imageUrl},
+        ingredients = ${ingredients ? JSON.stringify(ingredients) : null},
+        sold_out = ${soldOut || false},
+        updated_at = NOW()
+      RETURNING *
+    `;
+
+    return rows[0];
+  } catch (error) {
+    console.error('Database error in upsertPizza:', error);
+    throw error;
+  }
+};
+
+// ============================================
+// USER FUNCTIONS
+// ============================================
+
 /**
  * Get or create user by Auth0 ID
  * @param {Object} userData - User data from Auth0 token
@@ -20,6 +101,7 @@ export const getOrCreateUser = async (auth0Id, email, name = null) => {
     if (rows.length > 0) {
       return rows[0];
     }
+
 
     // Create new user
     const { rows: newUserRows } = await sql`

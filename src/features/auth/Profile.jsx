@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Link } from 'react-router-dom';
+import { fetchAndStoreMetadata } from '../../utils/userMetadata';
 
 function Profile() {
   const { user, getIdTokenClaims, getAccessTokenSilently, isLoading } = useAuth0();
@@ -14,9 +15,11 @@ function Profile() {
   const [showDecoded, setShowDecoded] = useState(false);
   const [subscription, setSubscription] = useState('standard');
   const [isUpdatingSubscription, setIsUpdatingSubscription] = useState(false);
+  const [userMetadata, setUserMetadata] = useState(null);
+  const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
 
   useEffect(() => {
-    const getTokens = async () => {
+    const getTokensAndMetadata = async () => {
       try {
         const idTokenClaims = await getIdTokenClaims();
         const accessTokenString = await getAccessTokenSilently();
@@ -29,13 +32,22 @@ function Profile() {
                                     user.app_metadata?.subscription ||
                                     'standard';
         setSubscription(currentSubscription);
+
+        // Auto-fetch metadata and store in localStorage
+        setIsLoadingMetadata(true);
+        const metadata = await fetchAndStoreMetadata(getAccessTokenSilently);
+        if (metadata) {
+          setUserMetadata(metadata);
+        }
+        setIsLoadingMetadata(false);
       } catch (error) {
         console.error('Error getting tokens:', error);
+        setIsLoadingMetadata(false);
       }
     };
 
     if (!isLoading && user) {
-      getTokens();
+      getTokensAndMetadata();
     }
   }, [getIdTokenClaims, getAccessTokenSilently, isLoading, user]);
 
@@ -124,11 +136,23 @@ function Profile() {
               />
             )}
             <div>
-              <p className="text-lg font-semibold text-stone-800">{user.name || 'No name'}</p>
+              <p className="text-lg font-semibold text-stone-800">
+                {userMetadata?.fullName || user.name || 'No name'}
+              </p>
               <p className="text-sm text-stone-600">{user.email}</p>
               <p className="mt-1 text-xs text-stone-500">
                 {user.email_verified ? '✓ Email verified' : '⚠ Email not verified'}
               </p>
+
+              {/* Address */}
+              {!isLoadingMetadata && userMetadata?.address && (
+                <div className="mt-2">
+                  <p className="text-xs font-medium text-stone-600">Address:</p>
+                  <p className="text-xs text-stone-700">{userMetadata.address.formatted}</p>
+                </div>
+              )}
+
+              {/* Subscription */}
               <div className="mt-2 flex items-center gap-2">
                 <span className="text-xs font-medium text-stone-600">Subscription:</span>
                 <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${
@@ -159,6 +183,22 @@ function Profile() {
               : 'Upgrade to Premium'}
           </button>
         </div>
+
+        {/* Display Metadata */}
+        {userMetadata && (
+          <div className="mt-4 rounded bg-green-100 p-3">
+            <p className="text-sm font-semibold text-green-800">Metadata Fetched!</p>
+            {userMetadata.fullName && (
+              <p className="text-sm text-green-700">Full Name: {userMetadata.fullName}</p>
+            )}
+            {userMetadata.address && (
+              <p className="text-sm text-green-700">Address: {userMetadata.address.formatted}</p>
+            )}
+            {!userMetadata.address && (
+              <p className="text-sm text-orange-700">No address found in user_metadata</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Decode Button */}
