@@ -41,7 +41,8 @@ export const getEmailFromToken = (req) => {
     || req.auth.payload.email
     || (req.auth.payload.sub?.includes('@') ? req.auth.payload.sub : null);
 
-  return email;
+  // Return null if email is empty string or just whitespace
+  return (email && email.trim()) ? email.trim() : null;
 };
 
 /**

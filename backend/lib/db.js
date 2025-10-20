@@ -93,10 +93,7 @@ export const upsertPizza = async (pizzaData) => {
  */
 export const getOrCreateUser = async (auth0Id, email, name = null) => {
   try {
-    // If email is null, create a placeholder email from auth0Id
-    const userEmail = email || `${auth0Id.replace(/[|@]/g, '-')}@placeholder.local`;
-
-    // Check if user exists
+    // Check if user exists first
     const { rows } = await sql`
       SELECT * FROM users WHERE auth0_id = ${auth0Id}
     `;
@@ -105,7 +102,12 @@ export const getOrCreateUser = async (auth0Id, email, name = null) => {
       return rows[0];
     }
 
-    // Create new user
+    // Create new user with validated email
+    // If email is null, undefined, or empty string, create placeholder
+    const userEmail = (email && email.trim())
+      ? email
+      : `${auth0Id.replace(/[|@]/g, '-')}@placeholder.local`;
+
     const { rows: newUserRows } = await sql`
       INSERT INTO users (auth0_id, email, name, created_at, updated_at)
       VALUES (${auth0Id}, ${userEmail}, ${name}, NOW(), NOW())
@@ -115,6 +117,8 @@ export const getOrCreateUser = async (auth0Id, email, name = null) => {
     return newUserRows[0];
   } catch (error) {
     console.error('Database error in getOrCreateUser:', error);
+    console.error('Auth0 ID:', auth0Id);
+    console.error('Email:', email);
     throw error;
   }
 };
