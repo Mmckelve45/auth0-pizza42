@@ -11,7 +11,8 @@ import { asyncHandler } from '../../backend/middleware/error-handler.js';
 import { getUserIdFromToken, getEmailFromToken } from '../../backend/lib/auth0.js';
 
 const handler = async (req, res) => {
-  const { orderId } = req.query;
+  // Check both query and params for orderId (local dev uses params, Vercel uses query)
+  const orderId = req.query?.orderId || req.params?.orderId;
 
   if (!orderId) {
     return res.status(400).json({ error: 'Order ID is required' });
@@ -22,7 +23,6 @@ const handler = async (req, res) => {
     try {
       const auth0Id = getUserIdFromToken(req);
       const email = getEmailFromToken(req);
-
       const user = await getOrCreateUser(auth0Id, email);
 
       // Check if order belongs to user

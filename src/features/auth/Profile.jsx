@@ -5,11 +5,14 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { fetchAndStoreMetadata } from '../../utils/userMetadata';
+import { addToast } from '../toast/toastSlice';
 
 function Profile() {
   const { user, getIdTokenClaims, getAccessTokenSilently, isLoading } = useAuth0();
+  const dispatch = useDispatch();
   const [idToken, setIdToken] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
   const [showDecoded, setShowDecoded] = useState(false);
@@ -17,6 +20,7 @@ function Profile() {
   const [isUpdatingSubscription, setIsUpdatingSubscription] = useState(false);
   const [userMetadata, setUserMetadata] = useState(null);
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     const getTokensAndMetadata = async () => {
@@ -51,6 +55,34 @@ function Profile() {
     }
   }, [getIdTokenClaims, getAccessTokenSilently, isLoading, user]);
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+
+    try {
+      // Force token refresh which updates user claims
+      await getAccessTokenSilently({ cacheMode: 'off' });
+
+      // Show success toast
+      dispatch(addToast({
+        type: 'success',
+        message: 'Token refreshed successfully!',
+        duration: 3000,
+      }));
+
+      // Reload the page to get fresh user data
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+      dispatch(addToast({
+        type: 'error',
+        message: 'Failed to refresh token. Please try again.',
+      }));
+      setIsRefreshing(false);
+    }
+  };
+
   const toggleSubscription = async () => {
     const newSubscription = subscription === 'premium' ? 'standard' : 'premium';
     setIsUpdatingSubscription(true);
@@ -69,13 +101,23 @@ function Profile() {
       if (response.ok) {
         const data = await response.json();
         setSubscription(data.data.subscription);
+        dispatch(addToast({
+          type: 'success',
+          message: `Subscription updated to ${data.data.subscription}!`,
+        }));
       } else {
         console.error('Failed to update subscription');
-        alert('Failed to update subscription. Please try again.');
+        dispatch(addToast({
+          type: 'error',
+          message: 'Failed to update subscription. Please try again.',
+        }));
       }
     } catch (error) {
       console.error('Error updating subscription:', error);
-      alert('Error updating subscription. Please try again.');
+      dispatch(addToast({
+        type: 'error',
+        message: 'Error updating subscription. Please try again.',
+      }));
     } finally {
       setIsUpdatingSubscription(false);
     }
@@ -125,7 +167,30 @@ function Profile() {
 
       {/* User Info */}
       <div className="mb-8 rounded-lg bg-white p-6 shadow-md">
-        <h1 className="mb-4 text-2xl font-bold text-stone-800">Profile</h1>
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-stone-800">Profile</h1>
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 rounded-full bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-200 disabled:cursor-not-allowed disabled:opacity-50"
+            title="Refresh user data"
+          >
+            <svg
+              className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             {user.picture && (

@@ -93,6 +93,9 @@ export const upsertPizza = async (pizzaData) => {
  */
 export const getOrCreateUser = async (auth0Id, email, name = null) => {
   try {
+    // If email is null, create a placeholder email from auth0Id
+    const userEmail = email || `${auth0Id.replace(/[|@]/g, '-')}@placeholder.local`;
+
     // Check if user exists
     const { rows } = await sql`
       SELECT * FROM users WHERE auth0_id = ${auth0Id}
@@ -102,11 +105,10 @@ export const getOrCreateUser = async (auth0Id, email, name = null) => {
       return rows[0];
     }
 
-
     // Create new user
     const { rows: newUserRows } = await sql`
       INSERT INTO users (auth0_id, email, name, created_at, updated_at)
-      VALUES (${auth0Id}, ${email}, ${name}, NOW(), NOW())
+      VALUES (${auth0Id}, ${userEmail}, ${name}, NOW(), NOW())
       RETURNING *
     `;
 

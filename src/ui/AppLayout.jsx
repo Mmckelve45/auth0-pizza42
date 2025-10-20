@@ -2,6 +2,7 @@ import CartOverview from "../features/cart/CartOverview";
 import Header from "./Header";
 import { Outlet, useNavigation } from "react-router-dom";
 import Loader from "./Loader";
+import ToastContainer from "../features/toast/ToastContainer";
 
 export default function AppLayout() {
   const navigation = useNavigation();
@@ -17,6 +18,7 @@ export default function AppLayout() {
         </main>
       </div>
       <CartOverview />
+      <ToastContainer />
     </div>
   );
 }

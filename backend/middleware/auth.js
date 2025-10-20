@@ -46,8 +46,11 @@ export const requireAuth = (handler) => {
       // Run JWT validation
       await new Promise((resolve, reject) => {
         jwtCheck(req, res, (err) => {
-          if (err) reject(err);
-          else resolve();
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
         });
       });
 
@@ -58,7 +61,7 @@ export const requireAuth = (handler) => {
       // Call the actual handler
       return await handler(req, res);
     } catch (error) {
-      console.error('Auth middleware error:', error);
+      console.error('Auth error:', error);
       return res.status(401).json(unauthorized('Invalid or missing authentication token'));
     }
   };

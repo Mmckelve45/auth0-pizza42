@@ -33,7 +33,15 @@ export const getEmailFromToken = (req) => {
   if (!req.auth || !req.auth.payload) {
     return null;
   }
-  return req.auth.payload.email || req.auth.payload['https://your-namespace/email'];
+
+  // Try multiple possible locations for email
+  // Custom claim should be at the namespace defined in Auth0 Action
+  const email = req.auth.payload['https://pizza42.com/email']
+    || req.auth.payload[`${process.env.AUTH0_AUDIENCE}/email`]
+    || req.auth.payload.email
+    || (req.auth.payload.sub?.includes('@') ? req.auth.payload.sub : null);
+
+  return email;
 };
 
 /**

@@ -5,18 +5,43 @@
 
 // Store the Auth0 client instance globally
 let auth0ClientInstance = null;
+let clientInitPromise = null;
+let clientInitResolve = null;
 
 export const setAuth0Client = (client) => {
   auth0ClientInstance = client;
+
+  // Resolve the promise if anyone is waiting for initialization
+  if (clientInitResolve) {
+    clientInitResolve(client);
+  }
+};
+
+// Wait for Auth0 client to be initialized
+const waitForClient = () => {
+  if (auth0ClientInstance) {
+    return Promise.resolve(auth0ClientInstance);
+  }
+
+  // Create a promise that resolves when setAuth0Client is called
+  if (!clientInitPromise) {
+    clientInitPromise = new Promise((resolve) => {
+      clientInitResolve = resolve;
+    });
+  }
+
+  return clientInitPromise;
 };
 
 export const getAccessToken = async () => {
-  if (!auth0ClientInstance) {
-    throw new Error('Auth0 client not initialized. Make sure to call setAuth0Client in your App component.');
-  }
+  // Wait for client to be initialized (max 5 seconds)
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Auth0 client initialization timeout')), 5000)
+  );
 
   try {
-    const token = await auth0ClientInstance.getAccessTokenSilently();
+    const client = await Promise.race([waitForClient(), timeoutPromise]);
+    const token = await client.getAccessTokenSilently();
     return token;
   } catch (error) {
     console.error('Error getting access token:', error);

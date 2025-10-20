@@ -43,7 +43,33 @@ async function setupRoutes() {
   app.all('/api/menu', runHandler(menuHandler));
   app.all('/api/orders', runHandler(ordersHandler));
   app.all('/api/orders/:orderId', (req, res) => {
-    req.query = { orderId: req.params.orderId };
+    // Pass orderId via query to match Vercel behavior
+    // Use Object.defineProperty to bypass read-only restriction
+    try {
+      if (!req.query || typeof req.query !== 'object') {
+        Object.defineProperty(req, 'query', {
+          value: { orderId: req.params.orderId },
+          writable: true,
+          enumerable: true,
+          configurable: true,
+        });
+      } else {
+        req.query.orderId = req.params.orderId;
+      }
+    } catch (e) {
+      // Fallback: create a new request-like object
+      console.warn('Could not set query property, using workaround');
+      const originalReq = req;
+      req = new Proxy(originalReq, {
+        get(target, prop) {
+          if (prop === 'query') {
+            return { orderId: originalReq.params.orderId };
+          }
+          return target[prop];
+        }
+      });
+    }
+    console.log('📦 Order ID from params:', req.params.orderId);
     runHandler(orderByIdHandler)(req, res);
   });
   app.all('/api/user/profile', runHandler(profileHandler));

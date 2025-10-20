@@ -9,6 +9,7 @@ import { requireAuth } from '../../backend/middleware/auth.js';
 import { cors } from '../../backend/middleware/cors.js';
 import { asyncHandler } from '../../backend/middleware/error-handler.js';
 import { getUserIdFromToken, getEmailFromToken } from '../../backend/lib/auth0.js';
+import { updateUserMetadata, getManagementUser, sendVerificationEmail } from '../../backend/lib/management-api.js';
 
 const handler = async (req, res) => {
   // GET - Fetch user's order history
@@ -41,6 +42,24 @@ const handler = async (req, res) => {
     try {
       const auth0Id = getUserIdFromToken(req);
       const email = getEmailFromToken(req);
+
+      // Check email verification status
+      const auth0User = await getManagementUser(auth0Id);
+
+      if (!auth0User.email_verified) {
+        // Send verification email
+        try {
+          await sendVerificationEmail(auth0Id);
+        } catch (emailError) {
+          console.error('Failed to send verification email:', emailError);
+        }
+
+        return res.status(403).json({
+          success: false,
+          error: 'Please verify your email before placing an order',
+          requiresEmailVerification: true,
+        });
+      }
 
       // Validate required fields
       const { customer, cart, priority, address, phone, position } = req.body;
@@ -83,7 +102,24 @@ const handler = async (req, res) => {
       };
 
       // Save order to database
-      const savedOrder = await saveOrder(user.id, orderId, orderData);
+      await saveOrder(user.id, orderId, orderData);
+
+      // Update Auth0 user_metadata with order_history array (single item for demo)
+      try {
+        await updateUserMetadata(auth0Id, {
+          order_history: [
+            {
+              orderId,
+              orderDate: new Date().toISOString(),
+              totalPrice: pizzaPrice + priorityPrice,
+              itemCount: cart.reduce((sum, item) => sum + item.quantity, 0),
+            },
+          ],
+        });
+      } catch (metadataError) {
+        // Don't fail the order if metadata update fails
+        console.error('Failed to update user metadata:', metadataError);
+      }
 
       return res.status(201).json({
         success: true,

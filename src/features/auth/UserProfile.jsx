@@ -27,7 +27,7 @@ function UserProfile() {
       )}
       <div className="hidden sm:block">
         <p className="text-sm font-semibold text-stone-800">{displayName}</p>
-        {emailVerified ? (
+{emailVerified ? (
           <p className="text-xs text-green-600">✓ Verified</p>
         ) : (
           <p className="text-xs text-orange-600">⚠ Email not verified</p>

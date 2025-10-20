@@ -38,6 +38,46 @@ export const updateUserAppMetadata = async (userId, appMetadata) => {
 };
 
 /**
+ * Update user's user_metadata
+ * @param {string} userId - Auth0 user ID (e.g., "auth0|123...")
+ * @param {object} userMetadata - User metadata to merge
+ */
+export const updateUserMetadata = async (userId, userMetadata) => {
+  try {
+    const management = getManagementClient();
+
+    const result = await management.users.update(
+      { id: userId },
+      {
+        user_metadata: userMetadata,
+      }
+    );
+
+    return result.data;
+  } catch (error) {
+    console.error('Error updating user_metadata:', error);
+    throw error;
+  }
+};
+
+/**
+ * Send verification email to user
+ * @param {string} userId - Auth0 user ID (e.g., "auth0|123...")
+ */
+export const sendVerificationEmail = async (userId) => {
+  try {
+    const management = getManagementClient();
+
+    await management.jobs.verifyEmail({ user_id: userId });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error sending verification email:', error);
+    throw error;
+  }
+};
+
+/**
  * Get user by ID with full metadata
  * @param {string} userId - Auth0 user ID
  */

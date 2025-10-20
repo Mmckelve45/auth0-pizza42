@@ -34,7 +34,10 @@ export async function getMenu() {
 export async function getOrder(id) {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API_URL}/orders/${id}`, { headers });
-  if (!res.ok) throw Error(`Couldn't find order #${id}`);
+
+  if (!res.ok) {
+    throw Error(`Couldn't find order #${id}`);
+  }
 
   const { data } = await res.json();
   return data;
@@ -49,11 +52,25 @@ export async function createOrder(newOrder) {
       headers,
     });
 
-    if (!res.ok) throw Error();
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      const error = new Error(errorData.error || 'Failed creating your order');
+      error.statusCode = res.status;
+      error.details = errorData.details;
+      error.requiresEmailVerification = errorData.requiresEmailVerification;
+      throw error;
+    }
     const { data } = await res.json();
     return data;
-  } catch {
-    throw Error('Failed creating your order');
+  } catch (error) {
+    // Re-throw the error with status code if it exists
+    if (error.statusCode) {
+      throw error;
+    }
+    // Otherwise create a new error with unknown status
+    const newError = new Error(error.message || 'Failed creating your order');
+    newError.statusCode = 500;
+    throw newError;
   }
 }
 
@@ -66,9 +83,22 @@ export async function updateOrder(id, updateObj) {
       headers,
     });
 
-    if (!res.ok) throw Error();
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      const error = new Error(errorData.error || 'Failed updating your order');
+      error.statusCode = res.status;
+      error.details = errorData.details;
+      throw error;
+    }
     // We don't need the data, so we don't return anything
-  } catch (err) {
-    throw Error('Failed updating your order');
+  } catch (error) {
+    // Re-throw the error with status code if it exists
+    if (error.statusCode) {
+      throw error;
+    }
+    // Otherwise create a new error with unknown status
+    const newError = new Error(error.message || 'Failed updating your order');
+    newError.statusCode = 500;
+    throw newError;
   }
 }

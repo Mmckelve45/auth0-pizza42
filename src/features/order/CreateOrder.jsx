@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Form, redirect, useNavigation, useActionData } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 import { createOrder } from "../../services/apiRestaurant";
 import store from "../../store";
 import Button from "../../ui/Button";
@@ -10,6 +11,7 @@ import { clearCart, getCart, getTotalCartPrice } from "../cart/cartSlice";
 import EmptyCart from "../cart/EmptyCart";
 import { fetchAddress } from "../user/userSlice";
 import { getStoredMetadata } from "../../utils/userMetadata";
+import { addToast } from "../toast/toastSlice";
 
 // https://uibakery.io/regex-library/phone-number
 const isValidPhone = (str) =>
@@ -26,10 +28,13 @@ function CreateOrder() {
     error: errorAddress,
   } = useSelector((state) => state.user);
 
+  const { user, getAccessTokenSilently } = useAuth0();
   const isLoadingAddress = addressStatus === "loading";
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
   const [withPriority, setWithPriority] = useState(false);
+  const [isCheckingVerification, setIsCheckingVerification] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
 
   const cart = useSelector(getCart);
   const totalCartPrice = useSelector(getTotalCartPrice);
@@ -37,6 +42,43 @@ function CreateOrder() {
   const totalPrice = totalCartPrice + priorityPrice;
   const formErrors = useActionData();
   const dispatch = useDispatch();
+
+  // Check if email verification is required
+  const requiresEmailVerification = formErrors?.requiresEmailVerification && !emailVerified;
+
+  const handleCheckVerification = async () => {
+    setIsCheckingVerification(true);
+    try {
+      // Force token refresh to get updated user claims
+      await getAccessTokenSilently({ cacheMode: 'off' });
+
+      // Check the current user object from Auth0 SDK
+      if (user?.email_verified) {
+        setEmailVerified(true);
+        dispatch(addToast({
+          type: 'success',
+          message: 'Email verified successfully! You can now place your order.',
+          duration: 5000,
+        }));
+      } else {
+        // Email not verified yet, ask them to try again
+        dispatch(addToast({
+          type: 'warning',
+          message: 'Email not verified yet. Please click the link in your email and try again.',
+          duration: 5000,
+        }));
+      }
+    } catch (error) {
+      console.error('Error checking verification:', error);
+      dispatch(addToast({
+        type: 'error',
+        message: 'Failed to check verification status. Please try again.',
+        duration: 5000,
+      }));
+    } finally {
+      setIsCheckingVerification(false);
+    }
+  };
 
   // Get metadata from localStorage
   const metadata = getStoredMetadata();
@@ -134,7 +176,22 @@ function CreateOrder() {
                 : ""
             }
           />
-          <Button type="primary" disabled={isSubmitting || isLoadingAddress}>
+          {requiresEmailVerification && user?.email && (
+            <div className="mb-4">
+              <p className="mb-2 text-xs text-stone-600">
+                We have sent an email to <strong>{user.email}</strong>. Please check your inbox to proceed with your order.
+              </p>
+              <button
+                type="button"
+                onClick={handleCheckVerification}
+                disabled={isCheckingVerification}
+                className="text-sm font-semibold text-blue-600 hover:text-blue-700 underline disabled:opacity-50"
+              >
+                {isCheckingVerification ? 'Checking...' : 'Confirm Email Verification'}
+              </button>
+            </div>
+          )}
+          <Button type="primary" disabled={isSubmitting || isLoadingAddress || requiresEmailVerification}>
             {isSubmitting
               ? "Placing Order..."
               : `Order now for ${formatCurrency(totalPrice)}`}
@@ -164,11 +221,29 @@ export async function action({ request }) {
   }
 
   // If everything is ok, create new order and redirect.
-  const newOrder = await createOrder(order);
-  // Do not overuse here.
-  store.dispatch(clearCart());
+  try {
+    const newOrder = await createOrder(order);
+    // Do not overuse here.
+    store.dispatch(clearCart());
 
-  return redirect(`/order/${newOrder.id}`);
+    return redirect(`/order/${newOrder.id}`);
+  } catch (error) {
+    // Dispatch toast notification with status code and error message
+    store.dispatch(
+      addToast({
+        message: error.message || "Failed creating your order",
+        type: "error",
+        statusCode: error.statusCode || 500,
+        duration: 7000,
+      })
+    );
+
+    // Return errors to keep the form data
+    return {
+      orderError: error.message || "Failed creating your order",
+      requiresEmailVerification: error.requiresEmailVerification || false,
+    };
+  }
 }
 
 export default CreateOrder;
