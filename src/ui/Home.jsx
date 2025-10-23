@@ -13,6 +13,14 @@ function Home() {
     });
   };
 
+  const handleEmailLogin = () => {
+    loginWithRedirect({
+      authorizationParams: {
+        connection: 'email',
+      },
+    });
+  };
+
   return (
     <div className="my-10 px-4 text-center sm:my-16">
       <h1 className="mb-8 text-xl font-semibold md:text-3xl">
@@ -35,22 +43,32 @@ function Home() {
           </Button>
         </div>
       ) : (
-        <div className="space-y-6">
-          <div>
-            <p className="mb-6 text-lg text-stone-700">
-              Welcome! 👋
-            </p>
+        <div className="space-y-8">
+          <p className="text-lg text-stone-700">
+            Welcome! 👋
+          </p>
+
+          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+            {/* Email Passwordless Login */}
+            <button
+              onClick={handleEmailLogin}
+              className="rounded-full bg-yellow-400 px-6 py-3 font-semibold uppercase tracking-wide text-stone-800 transition-colors duration-300 hover:bg-yellow-300 focus:bg-yellow-300 focus:outline-none focus:ring focus:ring-yellow-300 focus:ring-offset-2 disabled:cursor-not-allowed sm:px-8 sm:py-4"
+            >
+              Email
+            </button>
+
             <LoginButton />
-            <p className="mt-4 text-sm text-stone-600">
-              {"Don't have an account?"}{" "}
-              <button
-                onClick={handleSignUp}
-                className="font-semibold text-yellow-500 hover:text-yellow-600 focus:outline-none"
-              >
-                Sign up
-              </button>
-            </p>
           </div>
+
+          <p className="text-center text-sm text-stone-600">
+            {"Don't have an account?"}{" "}
+            <button
+              onClick={handleSignUp}
+              className="font-semibold text-yellow-500 hover:text-yellow-600 focus:outline-none"
+            >
+              Sign up
+            </button>
+          </p>
         </div>
       )}
     </div>
