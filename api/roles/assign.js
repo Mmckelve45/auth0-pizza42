@@ -33,6 +33,33 @@ function getRandomRole() {
 }
 
 /**
+ * Add Express-like methods to Vercel request object
+ * Required for express-oauth2-jwt-bearer to work
+ */
+const polyfillExpressMethods = (req) => {
+  // Polyfill req.is() for Content-Type checking
+  if (!req.is) {
+    req.is = function(types) {
+      const contentType = this.headers['content-type'] || '';
+      if (!Array.isArray(types)) types = [types];
+      for (const type of types) {
+        if (contentType.includes(type)) return type;
+      }
+      return false;
+    };
+  }
+
+  // Polyfill req.get() for header access
+  if (!req.get) {
+    req.get = function(name) {
+      return this.headers[name.toLowerCase()];
+    };
+  }
+
+  return req;
+};
+
+/**
  * GET /api/roles/assign
  * Returns a randomly assigned role for the user
  * Requires valid M2M token with 'read:role' scope
@@ -45,6 +72,9 @@ const handler = async (req, res) => {
       message: 'Only GET requests are allowed',
     });
   }
+
+  // Add Express methods for compatibility
+  polyfillExpressMethods(req);
 
   // Create JWT validator for Role Service API
   const jwtCheck = auth({
