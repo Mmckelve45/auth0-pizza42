@@ -48,6 +48,8 @@ router.get('/', async (req, res) => {
       email,
       token: continuationToken,
     };
+    console.log('[Initiate] Session created with linking data');
+    console.log('[Initiate] Session ID:', req.sessionID);
 
     // Determine redirect URI based on environment
     // In production, callback goes to Render server, not frontend

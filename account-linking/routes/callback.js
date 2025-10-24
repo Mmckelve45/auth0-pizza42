@@ -21,8 +21,13 @@ router.get('/', async (req, res) => {
   try {
     const { code, state, error, error_description } = req.query;
 
+    console.log('[Callback] Starting callback flow');
+    console.log('[Callback] Has session:', !!req.session);
+    console.log('[Callback] Has linkingInProgress:', !!req.session?.linkingInProgress);
+
     // Handle Auth0 errors
     if (error) {
+      console.error('[Callback] Auth0 error:', error, error_description);
       return res.status(400).render('error', {
         message: 'Authentication failed',
         error: error_description || error,
@@ -30,6 +35,7 @@ router.get('/', async (req, res) => {
     }
 
     if (!code || !state) {
+      console.error('[Callback] Missing code or state');
       return res.status(400).render('error', {
         message: 'Invalid callback. Missing code or state.',
       });
@@ -39,7 +45,9 @@ router.get('/', async (req, res) => {
     let tokenData;
     try {
       tokenData = jwt.verify(state, CONTINUATION_TOKEN_SECRET);
+      console.log('[Callback] Token verified successfully');
     } catch (err) {
+      console.error('[Callback] Token verification failed:', err.message);
       return res.status(400).render('error', {
         message: 'Linking session expired. Please try again.',
       });
@@ -50,10 +58,15 @@ router.get('/', async (req, res) => {
       !req.session.linkingInProgress ||
       req.session.linkingInProgress.token !== state
     ) {
+      console.error('[Callback] Session validation failed');
+      console.error('[Callback] Session has linkingInProgress:', !!req.session.linkingInProgress);
+      console.error('[Callback] Token matches:', req.session.linkingInProgress?.token === state);
       return res.status(400).render('error', {
         message: 'Invalid linking session. Please start over.',
       });
     }
+
+    console.log('[Callback] Session validated successfully');
 
     // Exchange code for tokens (we need to verify the user re-authenticated)
     // Redirect URI must match what was sent to /authorize
