@@ -34,6 +34,11 @@ if (process.env.NODE_ENV !== 'production') {
 const app = express();
 const PORT = process.env.PORT || process.env.LINK_SERVER_PORT || 3002;
 
+// Trust Render's proxy (required for secure cookies to work)
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // View engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');

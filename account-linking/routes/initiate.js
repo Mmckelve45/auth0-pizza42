@@ -68,6 +68,8 @@ router.get('/', async (req, res) => {
       }
 
       console.log('[Initiate] Session saved successfully');
+      console.log('[Initiate] Cookie will be set for domain:', req.get('host'));
+      console.log('[Initiate] Session cookie name:', req.sessionID);
 
       // Render linking prompt page
       res.render('link-prompt', {
