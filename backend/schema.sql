@@ -91,3 +91,22 @@ CREATE TRIGGER update_pizzas_updated_at
   BEFORE UPDATE ON pizzas
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
+
+-- Account Linking History table
+-- Tracks when accounts are linked/unlinked for audit purposes
+CREATE TABLE IF NOT EXISTS account_linking_history (
+  id SERIAL PRIMARY KEY,
+  primary_user_id VARCHAR(255) NOT NULL,
+  secondary_user_id VARCHAR(255) NOT NULL,
+  provider VARCHAR(100) NOT NULL,
+  email VARCHAR(255),
+  action VARCHAR(20) NOT NULL CHECK (action IN ('linked', 'unlinked')),
+  linked_at TIMESTAMP DEFAULT NOW(),
+  metadata JSONB,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create indexes for querying linking history
+CREATE INDEX IF NOT EXISTS idx_linking_primary_user ON account_linking_history(primary_user_id);
+CREATE INDEX IF NOT EXISTS idx_linking_secondary_user ON account_linking_history(secondary_user_id);
+CREATE INDEX IF NOT EXISTS idx_linking_created_at ON account_linking_history(created_at DESC);

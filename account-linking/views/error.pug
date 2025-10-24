@@ -1,0 +1,27 @@
+extends layout
+
+block content
+  h2 ⚠️ Account Linking Error
+
+  .error-box
+    p #{message}
+
+  if error && error.message
+    .info-box
+      p <strong>Error Details:</strong>
+      p <code>#{error.message}</code>
+
+  .info-box
+    p <strong>What you can do:</strong>
+    p • Make sure both accounts use the same verified email address
+    p • Try the linking process again
+    p • Contact support if the issue persists
+
+  .button-container
+    a.button(href=`${process.env.VITE_APP_URL || 'http://localhost:5173'}`) Return to Pizza 42
+
+  .button-container
+    a.button.button-secondary(href=`${process.env.VITE_APP_URL || 'http://localhost:5173'}/profile`) Go to Profile
+
+  p(style='font-size: 12px; color: #78716c; text-align: center; margin-top: 24px;')
+    | If you continue to experience issues, please contact our support team.

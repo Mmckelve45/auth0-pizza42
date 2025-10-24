@@ -3,6 +3,7 @@ import Header from "./Header";
 import { Outlet, useNavigation } from "react-router-dom";
 import Loader from "./Loader";
 import ToastContainer from "../features/toast/ToastContainer";
+import AccountLinkingDetector from "../features/account-linking/AccountLinkingDetector";
 
 export default function AppLayout() {
   const navigation = useNavigation();
@@ -19,6 +20,7 @@ export default function AppLayout() {
       </div>
       <CartOverview />
       <ToastContainer />
+      <AccountLinkingDetector />
     </div>
   );
 }

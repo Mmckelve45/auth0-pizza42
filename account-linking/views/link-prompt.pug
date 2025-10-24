@@ -1,0 +1,32 @@
+extends layout
+
+block content
+  h2 🔗 Link Your Accounts
+
+  p We detected that you have multiple Pizza 42 accounts with the email address <strong>#{email}</strong>.
+
+  p Would you like to link these accounts together? This will allow you to log in with any of your authentication methods and access the same profile and order history.
+
+  .info-box
+    p <strong>Security Notice:</strong>
+    p To verify your identity, you'll be asked to re-authenticate with your other login method. This ensures that only you can link these accounts together.
+
+  .info-box
+    p <strong>Primary Account:</strong> <code>#{primaryUserId}</code>
+    p <strong>Account to Link:</strong> <code>#{secondaryUserId}</code>
+
+  .button-container
+    form(method='GET', action=`https://${auth0Domain}/authorize`, style='display: inline-block;')
+      input(type='hidden', name='client_id', value=clientId)
+      input(type='hidden', name='response_type', value='code')
+      input(type='hidden', name='redirect_uri', value=redirectUri)
+      input(type='hidden', name='scope', value='openid profile email')
+      input(type='hidden', name='state', value=continuationToken)
+      input(type='hidden', name='prompt', value='login')
+      button.button(type='submit') ✓ Link Accounts
+
+  .button-container
+    a.button.button-secondary(href=appUrl) ✗ Cancel
+
+  p(style='font-size: 12px; color: #78716c; text-align: center; margin-top: 24px;')
+    | By linking accounts, your user data and order history will be merged.

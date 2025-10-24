@@ -1,0 +1,28 @@
+extends layout
+
+block content
+  h2 ✓ Accounts Linked Successfully!
+
+  .success-box
+    p Your accounts have been successfully linked together.
+
+  p From now on, you can log in using any of your authentication methods and access the same profile and order history.
+
+  .info-box
+    p <strong>Primary Account:</strong> <code>#{primaryUserId}</code>
+    p <strong>Linked Identity:</strong> <code>#{secondaryUserId}</code>
+    p <strong>Provider:</strong> #{provider}
+    p <strong>Email:</strong> #{email}
+
+  .info-box(style='background-color: #fef3c7;')
+    p <strong>What happens now?</strong>
+    p ✓ Your order history is now shared across both login methods
+    p ✓ Your profile settings are synchronized
+    p ✓ You can log in with either Google or Email/Password
+    p ✓ All future orders will be associated with your primary account
+
+  .button-container
+    a.button(href=returnUrl) Return to Pizza 42
+
+  p(style='font-size: 12px; color: #78716c; text-align: center; margin-top: 24px;')
+    | You can manage your linked accounts from your Profile page.

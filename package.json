@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:api": "node server.js",
+    "dev:link": "node account-linking/server.js",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
@@ -20,7 +21,10 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-oauth2-jwt-bearer": "^1.7.1",
+    "express-session": "^1.18.0",
+    "jsonwebtoken": "^9.0.2",
     "prop-types": "^15.8.1",
+    "pug": "^3.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-redux": "^8.1.2",

@@ -9,6 +9,7 @@ import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { fetchAndStoreMetadata } from '../../utils/userMetadata';
 import { addToast } from '../toast/toastSlice';
+import LinkedAccountsBadge from '../account-linking/LinkedAccountsBadge';
 
 function Profile() {
   const { user, getIdTokenClaims, getAccessTokenSilently, isLoading } = useAuth0();
@@ -313,6 +314,9 @@ function Profile() {
           </div>
         )}
       </div>
+
+      {/* Linked Accounts */}
+      <LinkedAccountsBadge />
 
       {/* User Object */}
       <div className="rounded-lg bg-white p-6 shadow-md">

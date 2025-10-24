@@ -117,3 +117,82 @@ export const formatAddress = (address) => {
     ].filter(Boolean).join(', ')
   };
 };
+
+/**
+ * Find users by email address
+ * @param {string} email - Email to search for
+ * @returns {Array} - Array of user objects
+ */
+export const findUsersByEmail = async (email) => {
+  try {
+    const management = getManagementClient();
+    const result = await management.users.getAll({
+      q: `email:"${email}"`,
+      search_engine: 'v3',
+    });
+    return result.data || [];
+  } catch (error) {
+    console.error('Error finding users by email:', error);
+    throw error;
+  }
+};
+
+/**
+ * Link two user accounts
+ * @param {string} primaryUserId - Primary user ID (target)
+ * @param {string} provider - Provider of secondary identity (e.g., 'google-oauth2')
+ * @param {string} userId - User ID of secondary identity
+ */
+export const linkAccounts = async (primaryUserId, provider, userId) => {
+  try {
+    const management = getManagementClient();
+    const result = await management.users.link(
+      { id: primaryUserId },
+      {
+        provider: provider,
+        user_id: userId,
+      }
+    );
+    return result.data;
+  } catch (error) {
+    console.error('Error linking accounts:', error);
+    throw error;
+  }
+};
+
+/**
+ * Unlink a secondary identity from a user account
+ * @param {string} primaryUserId - Primary user ID
+ * @param {string} provider - Provider of identity to unlink
+ * @param {string} userId - User ID of identity to unlink
+ */
+export const unlinkAccount = async (primaryUserId, provider, userId) => {
+  try {
+    const management = getManagementClient();
+    await management.users.unlink({
+      id: primaryUserId,
+      provider: provider,
+      user_id: userId,
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Error unlinking account:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all identities for a user (shows linked accounts)
+ * @param {string} userId - Auth0 user ID
+ * @returns {Array} - Array of identity objects
+ */
+export const getUserIdentities = async (userId) => {
+  try {
+    const management = getManagementClient();
+    const result = await management.users.get({ id: userId });
+    return result.data?.identities || [];
+  } catch (error) {
+    console.error('Error getting user identities:', error);
+    throw error;
+  }
+};
