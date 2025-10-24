@@ -58,16 +58,28 @@ router.get('/', async (req, res) => {
 
     const appUrl = process.env.VITE_APP_URL || 'http://localhost:5173';
 
-    // Render linking prompt page
-    res.render('link-prompt', {
-      email,
-      primaryUserId,
-      secondaryUserId,
-      continuationToken,
-      auth0Domain: process.env.AUTH0_DOMAIN,
-      clientId: process.env.VITE_AUTH0_LINK_CLIENT_ID,
-      redirectUri,
-      appUrl,
+    // Explicitly save session before rendering (required for Postgres store)
+    req.session.save((err) => {
+      if (err) {
+        console.error('[Initiate] Session save error:', err);
+        return res.status(500).render('error', {
+          message: 'Failed to create linking session',
+        });
+      }
+
+      console.log('[Initiate] Session saved successfully');
+
+      // Render linking prompt page
+      res.render('link-prompt', {
+        email,
+        primaryUserId,
+        secondaryUserId,
+        continuationToken,
+        auth0Domain: process.env.AUTH0_DOMAIN,
+        clientId: process.env.VITE_AUTH0_LINK_CLIENT_ID,
+        redirectUri,
+        appUrl,
+      });
     });
   } catch (error) {
     console.error('Error initiating link:', error);

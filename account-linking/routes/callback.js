@@ -22,8 +22,10 @@ router.get('/', async (req, res) => {
     const { code, state, error, error_description } = req.query;
 
     console.log('[Callback] Starting callback flow');
+    console.log('[Callback] Session ID:', req.sessionID);
     console.log('[Callback] Has session:', !!req.session);
     console.log('[Callback] Has linkingInProgress:', !!req.session?.linkingInProgress);
+    console.log('[Callback] Session data:', JSON.stringify(req.session));
 
     // Handle Auth0 errors
     if (error) {
