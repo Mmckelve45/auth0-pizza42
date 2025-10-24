@@ -8,9 +8,13 @@
 
 import express from 'express';
 import session from 'express-session';
+import connectPgSimple from 'connect-pg-simple';
+import pg from 'pg';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+
+const PgSession = connectPgSimple(session);
 
 // Import routes
 import detectRoute from './routes/detect.js';
@@ -52,9 +56,16 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session configuration
+// Session configuration with Postgres store (for serverless compatibility)
+const sessionStore = new PgSession({
+  conString: process.env.DATABASE_URL,
+  tableName: 'session',
+  createTableIfMissing: true, // Auto-create table if it doesn't exist
+});
+
 app.use(
   session({
+    store: sessionStore,
     secret: process.env.SESSION_SECRET || 'pizza42-linking-secret-change-in-prod',
     resave: false,
     saveUninitialized: false,
