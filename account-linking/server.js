@@ -80,6 +80,7 @@ app.use(
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
+      sameSite: 'lax', // Allow cookies on OAuth redirects
       maxAge: 10 * 60 * 1000, // 10 minutes - linking flow should be quick
     },
   })

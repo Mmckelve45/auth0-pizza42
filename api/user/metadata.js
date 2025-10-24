@@ -17,6 +17,7 @@ const handler = async (req, res) => {
       const auth0UserId = getUserIdFromToken(req);
 
       // Fetch full user profile from Management API
+      console.log('[Metadata] Fetching user:', auth0UserId);
       const user = await getManagementUser(auth0UserId);
 
       // Format address if it exists
