@@ -4,6 +4,7 @@ import { Outlet, useNavigation } from "react-router-dom";
 import Loader from "./Loader";
 import ToastContainer from "../features/toast/ToastContainer";
 import AccountLinkingDetector from "../features/account-linking/AccountLinkingDetector";
+import ClearLinkingCache from "../features/account-linking/ClearLinkingCache";
 
 export default function AppLayout() {
   const navigation = useNavigation();
@@ -21,6 +22,7 @@ export default function AppLayout() {
       <CartOverview />
       <ToastContainer />
       <AccountLinkingDetector />
+      <ClearLinkingCache />
     </div>
   );
 }
