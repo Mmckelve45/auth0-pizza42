@@ -56,16 +56,19 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Create Postgres connection pool with SSL for Neon
+const pgPool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false, // Required for Neon/managed Postgres
+  },
+});
+
 // Session configuration with Postgres store (for serverless compatibility)
 const sessionStore = new PgSession({
-  conString: process.env.DATABASE_URL,
+  pool: pgPool,
   tableName: 'session',
   createTableIfMissing: true, // Auto-create table if it doesn't exist
-  pool: {
-    ssl: {
-      rejectUnauthorized: false, // Required for Neon/managed Postgres
-    },
-  },
 });
 
 app.use(
