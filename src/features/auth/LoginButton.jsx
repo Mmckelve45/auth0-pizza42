@@ -25,7 +25,7 @@ function LoginButton() {
       {/* Google Social Login */}
       <button
         onClick={handleGoogleLogin}
-        className="rounded-full bg-white px-6 py-3 font-semibold uppercase tracking-wide text-stone-800 shadow-md transition-colors duration-300 hover:bg-stone-50 focus:outline-none focus:ring focus:ring-stone-300 focus:ring-offset-2 disabled:cursor-not-allowed sm:px-8 sm:py-4"
+        className="rounded-full bg-yellow-400 px-6 py-3 font-semibold uppercase tracking-wide text-stone-800 transition-colors duration-300 hover:bg-yellow-300 focus:bg-yellow-300 focus:outline-none focus:ring focus:ring-yellow-300 focus:ring-offset-2 disabled:cursor-not-allowed sm:px-8 sm:py-4"
       >
         Google
       </button>
@@ -33,7 +33,7 @@ function LoginButton() {
       {/* Email/Password Login */}
       <button
         onClick={handleLogin}
-        className="rounded-full bg-stone-200 px-6 py-3 font-semibold uppercase tracking-wide text-stone-800 transition-colors duration-300 hover:bg-stone-300 focus:bg-stone-300 focus:outline-none focus:ring focus:ring-stone-300 focus:ring-offset-2 disabled:cursor-not-allowed sm:px-8 sm:py-4"
+        className="rounded-full bg-yellow-400 px-6 py-3 font-semibold uppercase tracking-wide text-stone-800 transition-colors duration-300 hover:bg-yellow-300 focus:bg-yellow-300 focus:outline-none focus:ring focus:ring-yellow-300 focus:ring-offset-2 disabled:cursor-not-allowed sm:px-8 sm:py-4"
       >
         Password
       </button>
