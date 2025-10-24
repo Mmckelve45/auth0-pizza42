@@ -61,6 +61,11 @@ const sessionStore = new PgSession({
   conString: process.env.DATABASE_URL,
   tableName: 'session',
   createTableIfMissing: true, // Auto-create table if it doesn't exist
+  pool: {
+    ssl: {
+      rejectUnauthorized: false, // Required for Neon/managed Postgres
+    },
+  },
 });
 
 app.use(
