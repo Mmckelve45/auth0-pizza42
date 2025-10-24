@@ -34,6 +34,19 @@ router.get('/', async (req, res) => {
     // Format: "provider|userId" e.g., "google-oauth2|123456"
     const [provider, userId] = secondaryUserId.split('|');
 
+    // TODO: Preserve metadata from secondary account before linking
+    // Before linking, fetch both users' metadata and merge:
+    // 1. Get primary user's user_metadata and app_metadata
+    // 2. Get secondary user's user_metadata and app_metadata
+    // 3. Merge metadata (decide on conflict resolution strategy)
+    // 4. Update primary user with merged metadata
+    // 5. Then perform the link (secondary account metadata will be lost after linking)
+    // Example:
+    //   const primaryUser = await management.users.get({ id: primaryUserId });
+    //   const secondaryUser = await management.users.get({ id: secondaryUserId });
+    //   const mergedMetadata = mergeUserMetadata(primaryUser, secondaryUser);
+    //   await management.users.update({ id: primaryUserId }, { user_metadata: mergedMetadata });
+
     // Link the accounts
     // Secondary account will be linked TO the primary account
     const linkResult = await management.users.link(
