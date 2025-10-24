@@ -96,9 +96,11 @@ const handler = async (req, res) => {
       }
 
       // Check if token has required scope
-      const permissions = req.auth?.payload?.permissions || [];
-      if (!permissions.includes('read:role')) {
+      // The scope is a space-separated string in the JWT payload
+      const scopes = req.auth?.payload?.scope?.split(' ') || [];
+      if (!scopes.includes('read:role')) {
         console.error('Missing required scope: read:role');
+        console.error('Available scopes:', req.auth?.payload?.scope);
         res.status(403).json({
           error: 'forbidden',
           message: 'Insufficient permissions. Required scope: read:role',
