@@ -50,9 +50,9 @@ router.get('/', async (req, res) => {
     };
 
     // Determine redirect URI based on environment
-    const redirectUri = process.env.NODE_ENV === 'production'
-      ? `${process.env.VITE_APP_URL}/link/callback`
-      : 'http://localhost:3002/link/callback';
+    // In production, callback goes to Render server, not frontend
+    const linkServerUrl = process.env.LINK_SERVER_URL || 'http://localhost:3002';
+    const redirectUri = `${linkServerUrl}/link/callback`;
 
     const appUrl = process.env.VITE_APP_URL || 'http://localhost:5173';
 

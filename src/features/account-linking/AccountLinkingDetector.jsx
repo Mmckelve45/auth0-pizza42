@@ -27,10 +27,9 @@ function AccountLinkingDetector() {
       setIsChecking(true);
 
       try {
-        // Use link server port in development, relative path in production
-        const linkServerUrl = import.meta.env.PROD
-          ? `/link/detect?email=${encodeURIComponent(user.email)}`
-          : `http://localhost:3002/link/detect?email=${encodeURIComponent(user.email)}`;
+        // Use environment variable for link server URL
+        const linkServerBaseUrl = import.meta.env.VITE_LINK_SERVER_URL || 'http://localhost:3002';
+        const linkServerUrl = `${linkServerBaseUrl}/link/detect?email=${encodeURIComponent(user.email)}`;
 
         const response = await fetch(linkServerUrl);
 
@@ -68,10 +67,9 @@ function AccountLinkingDetector() {
         email: user.email,
       });
 
-      // Use link server port in development, relative path in production
-      const linkUrl = import.meta.env.PROD
-        ? `/link/initiate?${params}`
-        : `http://localhost:3002/link/initiate?${params}`;
+      // Use environment variable for link server URL
+      const linkServerBaseUrl = import.meta.env.VITE_LINK_SERVER_URL || 'http://localhost:3002';
+      const linkUrl = `${linkServerBaseUrl}/link/initiate?${params}`;
 
       window.location.href = linkUrl;
     }

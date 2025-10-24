@@ -21,11 +21,14 @@ import linkRoute from './routes/link.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables from root .env.local
-dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
+// Load environment variables from .env.local only in development
+// In production (Render), env vars are set via dashboard
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
+}
 
 const app = express();
-const PORT = process.env.LINK_SERVER_PORT || 3002;
+const PORT = process.env.PORT || process.env.LINK_SERVER_PORT || 3002;
 
 // View engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -89,10 +92,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server (for local development)
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`\n🔗 Account Linking Server running on http://localhost:${PORT}`);
+// Start server
+app.listen(PORT, () => {
+  console.log(`\n🔗 Account Linking Server running on port ${PORT}`);
+  console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+
+  if (process.env.NODE_ENV !== 'production') {
     console.log(`   Health check: http://localhost:${PORT}/link/health`);
     console.log(`\n📋 Environment Check:`);
     console.log(`   AUTH0_DOMAIN: ${process.env.AUTH0_DOMAIN ? '✓ Set' : '✗ Missing'}`);
@@ -100,8 +105,8 @@ if (process.env.NODE_ENV !== 'production') {
     console.log(`   AUTH0_MANAGEMENT_CLIENT_SECRET: ${process.env.AUTH0_MANAGEMENT_CLIENT_SECRET ? '✓ Set (hidden)' : '✗ Missing'}`);
     console.log(`   SESSION_SECRET: ${process.env.SESSION_SECRET ? '✓ Set' : '⚠ Using default'}`);
     console.log(`   VITE_AUTH0_LINK_CLIENT_ID: ${process.env.VITE_AUTH0_LINK_CLIENT_ID ? '✓ Set' : '✗ Missing'}\n`);
-  });
-}
+  }
+});
 
-// Export for Vercel
+// Export for Vercel (if needed)
 export default app;

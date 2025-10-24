@@ -57,9 +57,8 @@ router.get('/', async (req, res) => {
 
     // Exchange code for tokens (we need to verify the user re-authenticated)
     // Redirect URI must match what was sent to /authorize
-    const redirectUri = process.env.NODE_ENV === 'production'
-      ? `${process.env.VITE_APP_URL}/link/callback`
-      : 'http://localhost:3002/link/callback';
+    const linkServerUrl = process.env.LINK_SERVER_URL || 'http://localhost:3002';
+    const redirectUri = `${linkServerUrl}/link/callback`;
 
     const tokenResponse = await fetch(
       `https://${process.env.AUTH0_DOMAIN}/oauth/token`,
