@@ -197,15 +197,6 @@ The continuation token (JWT) contains:
 }
 ```
 
-## Next Steps
-
-After basic linking works:
-- [ ] Add email notifications when accounts are linked
-- [ ] Implement rate limiting to prevent abuse
-- [ ] Add user preference for auto-linking
-- [ ] Create admin dashboard for linking analytics
-- [ ] Add webhook notifications for linking events
-
 ## Support
 
 For detailed setup instructions, see `/ACCOUNT_LINKING_SETUP.md` in the root directory.

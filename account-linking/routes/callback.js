@@ -76,6 +76,7 @@ router.get('/', async (req, res) => {
     const linkServerUrl = process.env.LINK_SERVER_URL || 'http://localhost:3002';
     const redirectUri = `${linkServerUrl}/link/callback`;
 
+
     const tokenResponse = await fetch(
       `https://${process.env.AUTH0_DOMAIN}/oauth/token`,
       {

@@ -21,6 +21,14 @@ function Home() {
     });
   };
 
+  const handleEmployeeLogin = () => {
+    loginWithRedirect({
+      authorizationParams: {
+        connection: 'mckelvey-server',
+      },
+    });
+  };
+
   return (
     <div className="my-10 px-4 text-center sm:my-16">
       <h1 className="mb-8 text-xl font-semibold md:text-3xl">
@@ -69,6 +77,21 @@ function Home() {
               Sign up
             </button>
           </p>
+
+          {/* Divider */}
+          <div className="flex items-center justify-center gap-4">
+            <div className="h-px w-20 bg-stone-300"></div>
+            <span className="text-xs text-stone-400">OR</span>
+            <div className="h-px w-20 bg-stone-300"></div>
+          </div>
+
+          {/* Employee Login - On-Prem AD */}
+          <button
+            onClick={handleEmployeeLogin}
+            className="text-sm text-stone-500 hover:text-stone-700 underline focus:outline-none"
+          >
+            Employee Login (On-Prem AD)
+          </button>
         </div>
       )}
     </div>

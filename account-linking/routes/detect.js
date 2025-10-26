@@ -5,14 +5,16 @@
 
 import express from 'express';
 import { ManagementClient } from 'auth0';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
 /**
  * GET /link/detect?email=user@example.com
  * Returns list of accounts with matching email
+ * Requires: Valid JWT token
  */
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     const { email } = req.query;
 

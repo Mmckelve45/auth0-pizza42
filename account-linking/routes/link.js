@@ -5,6 +5,7 @@
 
 import express from 'express';
 import { ManagementClient } from 'auth0';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -109,14 +110,22 @@ router.get('/', async (req, res) => {
 /**
  * POST /link/unlink
  * Unlinks a secondary identity from the primary account
+ * Requires: Valid JWT token
  */
-router.post('/unlink', express.json(), async (req, res) => {
+router.post('/unlink', express.json(), requireAuth, async (req, res) => {
   try {
     const { primaryUserId, provider, userId } = req.body;
 
     if (!primaryUserId || !provider || !userId) {
       return res.status(400).json({
         error: 'Missing required fields: primaryUserId, provider, userId',
+      });
+    }
+
+    // Security check: Verify the authenticated user is the primary user
+    if (req.userId !== primaryUserId) {
+      return res.status(403).json({
+        error: 'Unauthorized: You can only unlink your own accounts',
       });
     }
 
