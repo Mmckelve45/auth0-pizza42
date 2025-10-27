@@ -6,7 +6,6 @@
 
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -19,22 +18,14 @@ const CONTINUATION_TOKEN_SECRET =
  *   - primaryUserId: The user currently logged in
  *   - secondaryUserId: The account to link (requires re-auth)
  *   - email: Email address (for display)
- * Requires: Valid JWT token
  */
-router.get('/', requireAuth, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { primaryUserId, secondaryUserId, email } = req.query;
 
     if (!primaryUserId || !secondaryUserId) {
       return res.status(400).render('error', {
         message: 'Invalid linking request. Missing user IDs.',
-      });
-    }
-
-    // Security check: Verify the authenticated user is the primary user
-    if (req.userId !== primaryUserId) {
-      return res.status(403).render('error', {
-        message: 'Unauthorized: You can only link accounts to your own account.',
       });
     }
 

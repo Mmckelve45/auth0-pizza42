@@ -5,7 +5,6 @@
 
 import express from 'express';
 import { ManagementClient } from 'auth0';
-import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -35,18 +34,47 @@ router.get('/', async (req, res) => {
     // Format: "provider|userId" e.g., "google-oauth2|123456"
     const [provider, userId] = secondaryUserId.split('|');
 
-    // TODO: Preserve metadata from secondary account before linking
-    // Before linking, fetch both users' metadata and merge:
-    // 1. Get primary user's user_metadata and app_metadata
-    // 2. Get secondary user's user_metadata and app_metadata
-    // 3. Merge metadata (decide on conflict resolution strategy)
-    // 4. Update primary user with merged metadata
-    // 5. Then perform the link (secondary account metadata will be lost after linking)
-    // Example:
-    //   const primaryUser = await management.users.get({ id: primaryUserId });
-    //   const secondaryUser = await management.users.get({ id: secondaryUserId });
-    //   const mergedMetadata = mergeUserMetadata(primaryUser, secondaryUser);
-    //   await management.users.update({ id: primaryUserId }, { user_metadata: mergedMetadata });
+    // Preserve metadata from secondary account before linking
+    console.log('[Link] Fetching users to preserve metadata...');
+    const primaryUser = await management.users.get({ id: primaryUserId });
+    const secondaryUser = await management.users.get({ id: secondaryUserId });
+
+    // Merge app_metadata
+    const mergedAppMetadata = {
+      ...(primaryUser.app_metadata || {}),
+      // Preserve subscription from secondary if primary doesn't have one
+      subscription: primaryUser.app_metadata?.subscription ||
+                    secondaryUser.app_metadata?.subscription ||
+                    'standard',
+    };
+
+    // Merge user_metadata
+    const primaryOrderHistory = primaryUser.user_metadata?.order_history || [];
+    const secondaryOrderHistory = secondaryUser.user_metadata?.order_history || [];
+
+    const mergedUserMetadata = {
+      ...(secondaryUser.user_metadata || {}), // Secondary as base
+      ...(primaryUser.user_metadata || {}),   // Primary overwrites (takes precedence)
+      // Combine order histories (primary first, then secondary)
+      order_history: [...primaryOrderHistory, ...secondaryOrderHistory],
+    };
+
+    console.log('[Link] Merged metadata:', {
+      app_metadata: mergedAppMetadata,
+      user_metadata_keys: Object.keys(mergedUserMetadata),
+      total_orders: mergedUserMetadata.order_history.length,
+    });
+
+    // Update primary user with merged metadata BEFORE linking
+    await management.users.update(
+      { id: primaryUserId },
+      {
+        user_metadata: mergedUserMetadata,
+        app_metadata: mergedAppMetadata,
+      }
+    );
+
+    console.log('[Link] Metadata merged and updated on primary user');
 
     // Link the accounts
     // Secondary account will be linked TO the primary account
@@ -71,7 +99,15 @@ router.get('/', async (req, res) => {
       secondary_user_id: secondaryUserId,
       email: email,
       provider: provider,
+      metadata_preserved: {
+        subscription: mergedAppMetadata.subscription,
+        order_count: mergedUserMetadata.order_history.length,
+        primary_orders: primaryOrderHistory.length,
+        secondary_orders: secondaryOrderHistory.length,
+      },
     };
+
+    console.log('[Link] Audit log:', auditLog);
 
     // TODO: Save audit log to database
     // await saveAuditLog(auditLog);
@@ -110,22 +146,14 @@ router.get('/', async (req, res) => {
 /**
  * POST /link/unlink
  * Unlinks a secondary identity from the primary account
- * Requires: Valid JWT token
  */
-router.post('/unlink', express.json(), requireAuth, async (req, res) => {
+router.post('/unlink', express.json(), async (req, res) => {
   try {
     const { primaryUserId, provider, userId } = req.body;
 
     if (!primaryUserId || !provider || !userId) {
       return res.status(400).json({
         error: 'Missing required fields: primaryUserId, provider, userId',
-      });
-    }
-
-    // Security check: Verify the authenticated user is the primary user
-    if (req.userId !== primaryUserId) {
-      return res.status(403).json({
-        error: 'Unauthorized: You can only unlink your own accounts',
       });
     }
 

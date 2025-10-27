@@ -7,11 +7,19 @@ import { useAuth0 } from '@auth0/auth0-react';
 function LogoutButton() {
   const { logout } = useAuth0();
 
-  const handleLogout = () => {
-    logout({
+  const handleLogout = async () => {
+    // Clear ALL caches before logging out
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // Force a full page reload after logout to ensure clean state
+    await logout({
       logoutParams: {
         returnTo: window.location.origin,
       },
+      openUrl: (url) => {
+        window.location.href = url;
+      }
     });
   };
 

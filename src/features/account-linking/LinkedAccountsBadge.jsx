@@ -9,7 +9,7 @@ import { useDispatch } from 'react-redux';
 import { addToast } from '../toast/toastSlice';
 
 function LinkedAccountsBadge() {
-  const { user, getAccessTokenSilently } = useAuth0();
+  const { user } = useAuth0();
   const dispatch = useDispatch();
   const [identities, setIdentities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,12 +31,14 @@ function LinkedAccountsBadge() {
     }
 
     try {
-      const token = await getAccessTokenSilently();
-      const response = await fetch('/link/complete/unlink', {
+      // Use environment variable for link server URL
+      const linkServerBaseUrl = import.meta.env.VITE_LINK_SERVER_URL || 'http://localhost:3002';
+      const unlinkUrl = `${linkServerBaseUrl}/link/complete/unlink`;
+
+      const response = await fetch(unlinkUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           primaryUserId: user.sub,

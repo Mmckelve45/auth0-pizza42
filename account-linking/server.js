@@ -14,22 +14,22 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
-const PgSession = connectPgSimple(session);
-
-// Import routes
-import detectRoute from './routes/detect.js';
-import initiateRoute from './routes/initiate.js';
-import callbackRoute from './routes/callback.js';
-import linkRoute from './routes/link.js';
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables from .env.local only in development
+// Load environment variables FIRST, before importing routes
 // In production (Render), env vars are set via dashboard
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 }
+
+const PgSession = connectPgSimple(session);
+
+// Import routes (AFTER dotenv.config so middleware can access env vars)
+import detectRoute from './routes/detect.js';
+import initiateRoute from './routes/initiate.js';
+import callbackRoute from './routes/callback.js';
+import linkRoute from './routes/link.js';
 
 const app = express();
 const PORT = process.env.PORT || process.env.LINK_SERVER_PORT || 3002;
@@ -126,6 +126,7 @@ app.listen(PORT, () => {
     console.log(`   Health check: http://localhost:${PORT}/link/health`);
     console.log(`\n📋 Environment Check:`);
     console.log(`   AUTH0_DOMAIN: ${process.env.AUTH0_DOMAIN ? '✓ Set' : '✗ Missing'}`);
+    console.log(`   AUTH0_AUDIENCE: ${process.env.AUTH0_AUDIENCE ? '✓ Set' : '✗ Missing'}`);
     console.log(`   AUTH0_MANAGEMENT_CLIENT_ID: ${process.env.AUTH0_MANAGEMENT_CLIENT_ID ? '✓ Set' : '✗ Missing'}`);
     console.log(`   AUTH0_MANAGEMENT_CLIENT_SECRET: ${process.env.AUTH0_MANAGEMENT_CLIENT_SECRET ? '✓ Set (hidden)' : '✗ Missing'}`);
     console.log(`   SESSION_SECRET: ${process.env.SESSION_SECRET ? '✓ Set' : '⚠ Using default'}`);

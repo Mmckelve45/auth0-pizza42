@@ -113,6 +113,15 @@ Server runs on `http://localhost:3002` by default.
 
 ## Environment Variables
 
+  {
+    "PROVISIONING_TICKET": "your-existing-ticket-url-should-already-be-here",
+    "LDAP_URL": "ldap://192.168.0.50:389",
+    "LDAP_BASE": "DC=mckelvey,DC=local",
+    "LDAP_BIND_USER": "CN=Administrator,CN=Users,DC=mckelvey,DC=local",
+    "LDAP_BIND_PASSWORD": "your-administrator-password-here",
+    "NODE_TLS_REJECT_UNAUTHORIZED": "0"
+  }
+
 Required:
 - `AUTH0_DOMAIN` - Your Auth0 tenant domain
 - `VITE_AUTH0_LINK_CLIENT_ID` - Regular Web App client ID

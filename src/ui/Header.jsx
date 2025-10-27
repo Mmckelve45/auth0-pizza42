@@ -5,6 +5,18 @@ import Username from "../features/user/Username";
 import UserProfile from "../features/auth/UserProfile";
 import LogoutButton from "../features/auth/LogoutButton";
 
+// Separate component with key to force re-render on user change
+function UserProfileSection() {
+  const { user } = useAuth0();
+
+  return (
+    <div key={user?.sub} className="flex items-center gap-4">
+      <UserProfile />
+      <LogoutButton />
+    </div>
+  );
+}
+
 export default function Header() {
   const { isAuthenticated, isLoading } = useAuth0();
 
@@ -23,10 +35,7 @@ export default function Header() {
       {isLoading ? (
         <div className="text-sm">Loading...</div>
       ) : isAuthenticated ? (
-        <div className="flex items-center gap-4">
-          <UserProfile />
-          <LogoutButton />
-        </div>
+        <UserProfileSection />
       ) : (
         <Username />
       )}

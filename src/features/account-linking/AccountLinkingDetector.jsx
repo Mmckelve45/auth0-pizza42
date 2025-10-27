@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 
 function AccountLinkingDetector() {
-  const { user, isAuthenticated, isLoading } = useAuth0();
+  const { user, isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0();
   const [showLinkPrompt, setShowLinkPrompt] = useState(false);
   const [duplicateAccounts, setDuplicateAccounts] = useState([]);
   const [isChecking, setIsChecking] = useState(false);
@@ -27,11 +27,18 @@ function AccountLinkingDetector() {
       setIsChecking(true);
 
       try {
+        // Get access token for API authentication
+        const token = await getAccessTokenSilently();
+
         // Use environment variable for link server URL
         const linkServerBaseUrl = import.meta.env.VITE_LINK_SERVER_URL || 'http://localhost:3002';
         const linkServerUrl = `${linkServerBaseUrl}/link/detect?email=${encodeURIComponent(user.email)}`;
 
-        const response = await fetch(linkServerUrl);
+        const response = await fetch(linkServerUrl, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (response.ok) {
           const data = await response.json();

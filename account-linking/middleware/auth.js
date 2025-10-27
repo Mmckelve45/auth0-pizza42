@@ -5,12 +5,18 @@
 
 import { auth } from 'express-oauth2-jwt-bearer';
 
-// Auth0 JWT validation middleware
-const jwtCheck = auth({
-  audience: process.env.AUTH0_AUDIENCE,
-  issuerBaseURL: `https://${process.env.AUTH0_DOMAIN}`,
-  tokenSigningAlg: 'RS256',
-});
+// Lazy initialization to ensure env vars are loaded
+let jwtCheck;
+const getJwtCheck = () => {
+  if (!jwtCheck) {
+    jwtCheck = auth({
+      audience: process.env.AUTH0_AUDIENCE,
+      issuerBaseURL: `https://${process.env.AUTH0_DOMAIN}`,
+      tokenSigningAlg: 'RS256',
+    });
+  }
+  return jwtCheck;
+};
 
 /**
  * Extract user ID from Auth0 token
@@ -30,9 +36,9 @@ export const getUserIdFromToken = (req) => {
  */
 export const requireAuth = async (req, res, next) => {
   try {
-    // Run JWT validation
+    // Run JWT validation (lazy initialization)
     await new Promise((resolve, reject) => {
-      jwtCheck(req, res, (err) => {
+      getJwtCheck()(req, res, (err) => {
         if (err) {
           reject(err);
         } else {
