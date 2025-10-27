@@ -9,9 +9,9 @@ import { cors } from '../../backend/middleware/cors.js';
 
 // Role assignment weights (for demo purposes)
 const ROLE_WEIGHTS = {
-  'Customer': 0.7,   // 70% chance
-  'Employee': 0.2,   // 20% chance
-  'Admin': 0.1,      // 10% chance
+  'Customer_REGULAR': 0.7,   // 70% chance
+  'Customer_LOYAL': 0.2,   // 20% chance
+  'Customer_VIP': 0.1,      // 10% chance
 };
 
 /**
@@ -29,7 +29,7 @@ function getRandomRole() {
   }
 
   // Fallback (should never happen)
-  return 'Customer';
+  return 'Customer_REGULAR';
 }
 
 /**
