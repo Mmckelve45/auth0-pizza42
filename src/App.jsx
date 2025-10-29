@@ -12,6 +12,7 @@ import CreateOrder, {
 import AppLayout from "./ui/AppLayout";
 import Error from "./ui/Error";
 import Profile from "./features/auth/Profile";
+import EmployeePortal from "./features/employee/EmployeePortal";
 import { action as updateOrderAction } from "./features/order/UpdateOrder";
 
 const router = createBrowserRouter([
@@ -49,6 +50,10 @@ const router = createBrowserRouter([
       {
         path: "/profile",
         element: <Profile />,
+      },
+      {
+        path: "/employee",
+        element: <EmployeePortal />,
       },
     ],
   },

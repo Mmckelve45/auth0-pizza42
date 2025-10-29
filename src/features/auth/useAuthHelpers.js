@@ -21,6 +21,7 @@ export const useAuthUser = () => {
   const emailVerified = user[`${AUTH0_NAMESPACE}/email_verified`] ?? user.email_verified;
   const orderHistory = user[`${AUTH0_NAMESPACE}/order_history`] || [];
   const riskScore = user[`${AUTH0_NAMESPACE}/risk_score`] || 0;
+  const role = user[`${AUTH0_NAMESPACE}/role`] || null;
 
   return {
     user,
@@ -29,6 +30,7 @@ export const useAuthUser = () => {
     emailVerified,
     orderHistory,
     riskScore,
+    role,
   };
 };
 
@@ -57,4 +59,12 @@ export const useAccessToken = () => {
 export const useCanPlaceOrders = () => {
   const { emailVerified, isAuthenticated } = useAuthUser();
   return isAuthenticated && emailVerified;
+};
+
+/**
+ * Check if user is an employee
+ */
+export const useIsEmployee = () => {
+  const { role, isAuthenticated } = useAuthUser();
+  return isAuthenticated && role === 'Employee';
 };
