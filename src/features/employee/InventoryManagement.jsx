@@ -3,26 +3,79 @@
  * Fetches and displays pizzas from .NET API
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import { ALL_SCOPES } from '../../config/auth0-config';
 
 const DOTNET_API_URL = import.meta.env.VITE_DOTNET_API_URL || 'http://localhost:5041';
 
 function InventoryManagement() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently, loginWithRedirect } = useAuth0();
   const [pizzas, setPizzas] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [editingPizzaId, setEditingPizzaId] = useState(null);
   const [newPrice, setNewPrice] = useState('');
   const [updatingPizza, setUpdatingPizza] = useState(null);
+  const [hasUpdatePizzaScope, setHasUpdatePizzaScope] = useState(null);
 
-  const fetchPizzas = async () => {
+  /**
+   * Check if user has update:pizza scope, request via MFA if not
+   * @returns {Promise<string|null>} Token with ALL scopes including update:pizza, or null if needs re-auth
+   */
+  const ensureUpdatePizzaScope = async () => {
+    try {
+      // Try to get token with ALL scopes (including update:pizza)
+      // This ensures we don't lose existing scopes
+      const token = await getAccessTokenSilently({
+        authorizationParams: {
+          scope: ALL_SCOPES,
+        },
+      });
+      return token;
+    } catch (error) {
+      console.log('update:pizza scope not available, triggering step-up MFA');
+
+      // Save current path to localStorage before redirecting
+      localStorage.setItem('auth0_returnTo', window.location.pathname);
+
+      // Trigger login to request ALL scopes (will trigger MFA via Action when it sees update:pizza)
+      await loginWithRedirect({
+        authorizationParams: {
+          scope: ALL_SCOPES,
+          // prompt: 'login', // Force re-authentication
+        },
+        appState: {
+          returnTo: window.location.pathname, // Return to inventory tab
+        },
+      });
+
+      return null; // Will redirect, so this won't be reached
+    }
+  };
+
+  const checkUpdatePizzaScope = useCallback(async () => {
+    try {
+      // Try to get token with ALL scopes (including update:pizza)
+      await getAccessTokenSilently({
+        authorizationParams: {
+          scope: ALL_SCOPES,
+        },
+      });
+      // If successful, user has the scope
+      setHasUpdatePizzaScope(true);
+    } catch (error) {
+      // If failed, user doesn't have the scope yet
+      setHasUpdatePizzaScope(false);
+    }
+  }, [getAccessTokenSilently]);
+
+  const fetchPizzas = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Get Auth0 access token
+      // Get Auth0 access token (read-only, no special scope needed)
       const token = await getAccessTokenSilently();
 
       const response = await fetch(`${DOTNET_API_URL}/api/pizzas`, {
@@ -43,12 +96,21 @@ function InventoryManagement() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [getAccessTokenSilently]);
 
   const updatePizzaPrice = async (pizzaId, unitPrice) => {
     setUpdatingPizza(pizzaId);
     try {
-      const token = await getAccessTokenSilently();
+      // Check for update:pizza scope, trigger MFA if needed
+      const token = await ensureUpdatePizzaScope();
+
+      if (!token) {
+        // User will be redirected for MFA, so just return
+        return;
+      }
+
+      // Update scope status (user now has the scope)
+      setHasUpdatePizzaScope(true);
 
       const response = await fetch(`${DOTNET_API_URL}/api/pizzas/${pizzaId}/price?newPrice=${unitPrice}`, {
         method: 'PUT',
@@ -83,7 +145,14 @@ function InventoryManagement() {
     const newSoldOut = !currentSoldOut;
     setUpdatingPizza(pizzaId);
     try {
-      const token = await getAccessTokenSilently();
+      // Check for update:pizza scope, trigger MFA if needed
+      const token = await ensureUpdatePizzaScope();
+
+      if (!token) {
+        // User will be redirected for MFA, so just return
+        setUpdatingPizza(null);
+        return;
+      }
 
       const response = await fetch(`${DOTNET_API_URL}/api/pizzas/${pizzaId}/soldout?soldOut=${newSoldOut}`, {
         method: 'PUT',
@@ -131,7 +200,8 @@ function InventoryManagement() {
 
   useEffect(() => {
     fetchPizzas();
-  }, []);
+    checkUpdatePizzaScope();
+  }, [fetchPizzas, checkUpdatePizzaScope]);
 
   return (
     <div className="rounded-lg bg-white p-6 shadow-md">
@@ -150,6 +220,71 @@ function InventoryManagement() {
         <p className="text-sm text-stone-600">
           <strong>Endpoint:</strong> <code className="text-xs bg-stone-200 px-2 py-1 rounded">{DOTNET_API_URL}/api/pizzas</code>
         </p>
+      </div>
+
+      {/* Scope Status Indicator */}
+      <div className="mb-4 rounded-lg border-2 border-purple-200 bg-purple-50 p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-2xl">🔐</span>
+          <h4 className="font-bold text-purple-900">Authorization Scopes</h4>
+        </div>
+
+        <div className="space-y-2">
+          {/* Required Scope */}
+          <div className="rounded-lg bg-white p-3 shadow-sm">
+            <div className="mb-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📋</span>
+                <span className="font-semibold text-stone-800">Required for Updates:</span>
+              </div>
+              <span className="rounded-full bg-purple-600 px-3 py-1 text-xs font-bold uppercase text-white">
+                Required
+              </span>
+            </div>
+            <code className="text-sm font-mono text-purple-700 bg-purple-100 px-2 py-1 rounded">
+              update:pizza
+            </code>
+            <p className="mt-2 text-xs text-stone-600">
+              ⚠️ Editing prices or sold-out status requires this scope (MFA protected)
+            </p>
+          </div>
+
+          {/* Current Status */}
+          <div className="rounded-lg bg-white p-3 shadow-sm">
+            <div className="mb-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">👤</span>
+                <span className="font-semibold text-stone-800">Your Current Status:</span>
+              </div>
+              {hasUpdatePizzaScope === null ? (
+                <span className="rounded-full bg-stone-300 px-3 py-1 text-xs font-bold uppercase text-stone-700">
+                  Checking...
+                </span>
+              ) : hasUpdatePizzaScope ? (
+                <span className="rounded-full bg-green-600 px-3 py-1 text-xs font-bold uppercase text-white flex items-center gap-1">
+                  ✓ Granted
+                </span>
+              ) : (
+                <span className="rounded-full bg-yellow-600 px-3 py-1 text-xs font-bold uppercase text-white flex items-center gap-1">
+                  ⚠ Not Yet
+                </span>
+              )}
+            </div>
+            {hasUpdatePizzaScope === true ? (
+              <p className="text-sm text-green-700">
+                ✅ You have completed MFA and can edit pizzas
+              </p>
+            ) : hasUpdatePizzaScope === false ? (
+              <p className="text-sm text-yellow-700">
+                🔒 Edit a pizza to trigger step-up MFA authentication
+              </p>
+            ) : (
+              <p className="text-sm text-stone-600">
+                Checking your permissions...
+              </p>
+            )}
+          </div>
+        </div>
       </div>
 
       {error && (

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import { setAuth0Client } from "./services/auth";
 import Home from "./ui/Home";
@@ -15,10 +15,35 @@ import Profile from "./features/auth/Profile";
 import EmployeePortal from "./features/employee/EmployeePortal";
 import { action as updateOrderAction } from "./features/order/UpdateOrder";
 
+// Component to handle post-auth redirects (must be inside AppLayout)
+function AuthRedirectHandler() {
+  const navigate = useNavigate();
+  const { isAuthenticated, isLoading } = useAuth0();
+
+  useEffect(() => {
+    // After authentication completes, check for saved redirect path
+    if (isAuthenticated && !isLoading) {
+      const returnTo = localStorage.getItem('auth0_returnTo');
+      if (returnTo) {
+        console.log('Navigating to saved path:', returnTo);
+        localStorage.removeItem('auth0_returnTo');
+        navigate(returnTo);
+      }
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  return null; // This component doesn't render anything
+}
+
 const router = createBrowserRouter([
   {
     // No path is called layout route
-    element: <AppLayout />,
+    element: (
+      <>
+        <AuthRedirectHandler />
+        <AppLayout />
+      </>
+    ),
     errorElement: <Error />,
     children: [
       {

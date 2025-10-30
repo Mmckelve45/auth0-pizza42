@@ -3,6 +3,7 @@
  * Use Auth0 SDK directly - no Redux needed!
  */
 
+import React from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 
 const AUTH0_NAMESPACE = 'https://pizza42.com';
@@ -67,4 +68,36 @@ export const useCanPlaceOrders = () => {
 export const useIsEmployee = () => {
   const { role, isAuthenticated } = useAuthUser();
   return isAuthenticated && role === 'Employee';
+};
+
+/**
+ * Check if user has a specific scope
+ */
+export const useHasScope = (requiredScope) => {
+  const { getAccessTokenSilently } = useAuth0();
+  const [hasScope, setHasScope] = React.useState(null);
+
+  React.useEffect(() => {
+    const checkScope = async () => {
+      try {
+        // Try to get token with the required scope
+        await getAccessTokenSilently({
+          authorizationParams: {
+            scope: requiredScope,
+          },
+        });
+
+        // If we got the token, we have the scope
+        setHasScope(true);
+      } catch (error) {
+        // If error, we don't have the scope
+        console.log('Scope check failed:', error);
+        setHasScope(false);
+      }
+    };
+
+    checkScope();
+  }, [requiredScope, getAccessTokenSilently]);
+
+  return hasScope;
 };
