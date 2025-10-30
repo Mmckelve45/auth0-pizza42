@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { createBrowserRouter, RouterProvider, useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import { setAuth0Client } from "./services/auth";
+import { fetchAndStoreMetadata } from "./utils/userMetadata";
 import Home from "./ui/Home";
 import Menu, { loader as menuLoader } from "./features/menu/Menu";
 import Cart from "./features/cart/Cart";
@@ -87,11 +88,24 @@ const router = createBrowserRouter([
 // Wrapper component to initialize Auth0 client
 function AppWithAuth() {
   const auth0 = useAuth0();
+  const { isAuthenticated, isLoading, getAccessTokenSilently } = auth0;
 
   useEffect(() => {
     // Store the Auth0 client globally so it can be used in non-React code
     setAuth0Client(auth0);
   }, [auth0]);
+
+  // Automatically fetch and store user metadata on login
+  useEffect(() => {
+    const loadUserMetadata = async () => {
+      if (isAuthenticated && !isLoading) {
+        console.log('User authenticated, fetching metadata...');
+        await fetchAndStoreMetadata(getAccessTokenSilently);
+      }
+    };
+
+    loadUserMetadata();
+  }, [isAuthenticated, isLoading, getAccessTokenSilently]);
 
   return <RouterProvider router={router} />;
 }
